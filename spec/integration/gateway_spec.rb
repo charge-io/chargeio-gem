@@ -17,9 +17,9 @@ describe 'Gateway' do
     it 'should retrieve the merchant' do
       merchant = @gateway.merchant
       merchant.name.should_not be_nil
-      merchant.primary_account.should_not be_nil
-      merchant.primary_account.attributes.has_key?('credit_enabled').should be false
-      merchant.primary_account.attributes.has_key?('manual_capture_enabled').should be false
+      merchant.primary_merchant_account.should_not be_nil
+      merchant.primary_merchant_account.attributes.has_key?('credit_enabled').should be false
+      merchant.primary_merchant_account.attributes.has_key?('manual_capture_enabled').should be false
     end
   end
 

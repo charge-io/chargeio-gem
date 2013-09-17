@@ -1,4 +1,4 @@
-class ChargeIO::Account < ChargeIO::Base
+class ChargeIO::MerchantAccount < ChargeIO::Base
 
   def merchant
     gateway.merchant
@@ -21,7 +21,7 @@ class ChargeIO::Account < ChargeIO::Base
   end
 
   def save
-    res = gateway.update_account(id, attributes)
+    res = gateway.update_merchant_account(id, attributes)
     replace(res)
   end
 end

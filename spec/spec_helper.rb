@@ -38,8 +38,9 @@ DEFAULT_MERCHANT_LIVE_MODE_OPTIONS = {
 }
 
 DEFAULT_CARD_PARAMS = {
+    type: 'card',
     number: '4242424242424242',
-    type: 'VISA',
+    card_type: 'VISA',
     exp_month: 10,
     exp_year: 2020,
     cvv: 123,
@@ -50,8 +51,9 @@ DEFAULT_CARD_PARAMS = {
 }
 
 MC_CARD_PARAMS = {
+    type: 'card',
     number: '5499740000000057',
-    type: 'MASTERCARD',
+    card_type: 'MASTERCARD',
     exp_month: 12,
     exp_year: 2020,
     cvv: '998',
@@ -63,6 +65,7 @@ MC_CARD_PARAMS = {
 }
 
 DEFAULT_ACH_PARAMS = {
+    type: 'bank',
     routing_number: '111000025',
     account_number: '1234567890',
     account_type: 'CHECKING',

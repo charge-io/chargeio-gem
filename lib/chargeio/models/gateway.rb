@@ -30,16 +30,16 @@ class ChargeIO::Gateway
     process_response(ChargeIO::Merchant, response)
   end
 
-  def update_account(account_id, params)
+  def update_merchant_account(account_id, params)
     account_json = params.to_json
     response = put(:accounts, account_id, account_json)
-    process_response(ChargeIO::Account, response)
+    process_response(ChargeIO::MerchantAccount, response)
   end
 
-  def update_bank_account(account_id, params)
+  def update_ach_account(account_id, params)
     account_json = params.to_json
-    response = put('bank-accounts', account_id, account_json)
-    process_response(ChargeIO::BankAccount, response)
+    response = put('ach-accounts', account_id, account_json)
+    process_response(ChargeIO::AchAccount, response)
   end
 
   def create_token(params={})
@@ -195,12 +195,12 @@ class ChargeIO::Gateway
   end
 
 
-  def accounts(params={})
-    merchant(params).accounts
+  def merchant_accounts(params={})
+    merchant(params).merchant_accounts
   end
 
-  def primary_account(params={})
-    merchant(params).primary_account
+  def primary_merchant_account(params={})
+    merchant(params).primary_merchant_account
   end
 
   def gateway

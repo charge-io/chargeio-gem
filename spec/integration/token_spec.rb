@@ -36,7 +36,7 @@ describe "Token" do
       t.should_not be_nil
       t.errors.present?.should be false
       t.id.should_not be_nil
-      t.type.should eq 'VISA'
+      t.card_type.should eq 'VISA'
     end
     it 'should succeed in creating a card from a token' do
       t = @gateway.create_token(@token_params.merge(:description => 'Some desc'))
@@ -50,7 +50,7 @@ describe "Token" do
       c.should_not be_nil
       c.errors.present?.should be false
       c.id.should_not be_nil
-      c.type.should eq t.type
+      c.card_type.should eq t.card_type
       c.number.should eq t.number
       c.exp_month.should eq t.exp_month
       c.exp_year.should eq t.exp_year
@@ -67,23 +67,23 @@ describe "Token" do
       token = @gateway.create_token(@token_params.merge(:number => ''))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.number'].should == [ 'Card number cannot be blank' ]
+      transaction.errors['method.number'].should == [ 'Card number cannot be blank' ]
     end
     it 'should return invalid_length (too short)' do
       token = @gateway.create_token(@token_params.merge(:number => '41111'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.number'].should == [ 'Card number length is invalid' ]
+      transaction.errors['method.number'].should == [ 'Card number length is invalid' ]
     end
     it 'should return card invalid due to truncation' do
       token = @gateway.create_token(@token_params.merge(:number => '411111111111111111112'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
       transaction.errors['base'].should == [ 'Card number is invalid' ]
     end
@@ -91,7 +91,7 @@ describe "Token" do
       token = @gateway.create_token(@token_params.merge(:number => '4242424242424241'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
       transaction.errors['base'].should == [ 'Card number is invalid' ]
     end
@@ -100,23 +100,23 @@ describe "Token" do
       token = @gateway.create_token(@token_params.merge(:exp_month => 0))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.exp_month'].should == [ 'Expiration month is invalid' ]
+      transaction.errors['method.exp_month'].should == [ 'Expiration month is invalid' ]
     end
     it 'should return exceeds_maximum_value' do
       token = @gateway.create_token(@token_params.merge(:exp_month => 13))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.exp_month'].should == [ 'Expiration month is invalid' ]
+      transaction.errors['method.exp_month'].should == [ 'Expiration month is invalid' ]
     end
     it 'should return card_expired' do
       token = @gateway.create_token(@token_params.merge(:exp_year => 2012))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
       transaction.errors['base'].should == [ 'Card is expired' ]
     end
@@ -124,158 +124,158 @@ describe "Token" do
       token = @gateway.create_token(@token_params.merge(:exp_month => 'Feb'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.exp_month'].should == [ 'Expiration month cannot be blank' ]
+      transaction.errors['method.exp_month'].should == [ 'Expiration month cannot be blank' ]
     end
     it 'should return invalid' do
       token = @gateway.create_token(@token_params.merge(:exp_year => '201B'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.exp_year'].should == [ 'Expiration year cannot be blank' ]
+      transaction.errors['method.exp_year'].should == [ 'Expiration year cannot be blank' ]
     end
     it 'should return invalid' do
       token = @gateway.create_token(@token_params.merge(:exp_year => 10001))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.exp_year'].should == [ 'Expiration year is invalid' ]
+      transaction.errors['method.exp_year'].should == [ 'Expiration year is invalid' ]
     end
 
     it 'should return invalid_length' do
       token = @gateway.create_token(@token_params.merge(:cvv => '12'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.cvv'].should == [ 'Card code length is invalid' ]
+      transaction.errors['method.cvv'].should == [ 'Card code length is invalid' ]
     end
     it 'should accept due to CVV truncation' do
       token = @gateway.create_token(@token_params.merge(:cvv => '12345'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
     end
     it 'should return invalid' do
       token = @gateway.create_token(@token_params.merge(:cvv => '54!'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.cvv'].should == [ 'Card code is invalid' ]
+      transaction.errors['method.cvv'].should == [ 'Card code is invalid' ]
     end
 
     it 'should accept due to name truncation' do
       token = @gateway.create_token(@token_params.merge(:name => 'Aname Thatiswaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaytooooooooooooooooooooooooooooooooolong'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:name].should == 'Aname Thatiswaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaytooooooooooooo'
+      transaction.method[:name].should == 'Aname Thatiswaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaytooooooooooooo'
     end
 
     it 'should accept due to address1 truncation' do
       token = @gateway.create_token(@token_params.merge(:address1 => '1503908349058459834 Reallylongnameofastreetintheunitedstatesofamericathatiwouldntwanttoliveon'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:address1].should == '1503908349058459834 Reallylongnameofastreetintheunitedstatesofam'
+      transaction.method[:address1].should == '1503908349058459834 Reallylongnameofastreetintheunitedstatesofam'
     end
     it 'should accept due to address2 truncation' do
       token = @gateway.create_token(@token_params.merge(:address2 => 'Building 783624872348923423498723948723, Suite 983425908234098234, Apt 3987345897345'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:address2].should == 'Building 783624872348923423498723948723, Suite 98342590823409823'
+      transaction.method[:address2].should == 'Building 783624872348923423498723948723, Suite 98342590823409823'
     end
     it 'should accept due to city truncation' do
       token = @gateway.create_token(@token_params.merge(:city => 'Areallylongnameofacityintheunitedstatesofamericamanwouldieverhatetohavetowritethis'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:city].should == 'Areallylongnameofacityintheunitedstatesofamericamanwouldieverhat'
+      transaction.method[:city].should == 'Areallylongnameofacityintheunitedstatesofamericamanwouldieverhat'
     end
 
     it 'should return invalid state' do
       token = @gateway.create_token(@token_params.merge(:state => 'F', :country => 'US'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.state'].should == [ 'State or province is invalid' ]
+      transaction.errors['method.state'].should == [ 'State or province is invalid' ]
     end
     it 'should return invalid state' do
       token = @gateway.create_token(@token_params.merge(:state => 'BIG', :country => 'US'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.state'].should == [ 'State or province is invalid' ]
+      transaction.errors['method.state'].should == [ 'State or province is invalid' ]
     end
     it 'should return invalid state' do
       token = @gateway.create_token(@token_params.merge(:state => 'FX', :country => 'US'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.state'].should == [ 'State or province is invalid' ]
+      transaction.errors['method.state'].should == [ 'State or province is invalid' ]
     end
     it 'should return invalid state' do
       token = @gateway.create_token(@token_params.merge(:state => 'TX', :country => 'CA'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.state'].should == [ 'State or province is invalid' ]
+      transaction.errors['method.state'].should == [ 'State or province is invalid' ]
     end
 
     it 'should accept due to postal code truncation' do
       token = @gateway.create_token(@token_params.merge(:postal_code => '78726-12345'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:postal_code].should == '78726-1234'
+      transaction.method[:postal_code].should == '78726-1234'
     end
     it 'should strip invalid characters and accept the alphanumeric value' do
       token = @gateway.create_token(@token_params.merge(:postal_code => '78_726+62A'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:postal_code].should == '7872662A';
+      transaction.method[:postal_code].should == '7872662A';
     end
 
     it 'should return invalid_length' do
       token = @gateway.create_token(@token_params.merge(:country => 'U'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.country'].should == [ 'Country length is invalid' ]
+      transaction.errors['method.country'].should == [ 'Country length is invalid' ]
     end
     it 'should accept due to country truncation to valid code' do
       token = @gateway.create_token(@token_params.merge(:country => 'USA'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.card[:country].should == 'US'
+      transaction.method[:country].should == 'US'
     end
     it 'should return invalid' do
       token = @gateway.create_token(@token_params.merge(:country => 'ZZ'))
       token.errors.present?.should be false
 
-      transaction = @gateway.authorize(100, :card_id => token.id)
+      transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be true
-      transaction.errors['card.country'].should == [ 'Country is invalid' ]
+      transaction.errors['method.country'].should == [ 'Country is invalid' ]
     end
   end
 

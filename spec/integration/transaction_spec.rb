@@ -9,11 +9,11 @@ describe "Transaction" do
 
   describe 'capture' do
     before :each do
-      @authorized = @gateway.authorize(100, :card => @card_params, :reference => 'auth ref 100')
+      @authorized = @gateway.authorize(100, :method => @card_params, :reference => 'auth ref 100')
       @authorized.errors.present?.should be false
       @authorized.id.should_not be_nil
       @authorized.status.should == 'AUTHORIZED'
-      @authorized.card[:fingerprint].should_not be_nil
+      @authorized.method[:fingerprint].should_not be_nil
       @authorized.auto_capture.should eq false
     end
 
@@ -51,7 +51,7 @@ describe "Transaction" do
         @authorized.errors['base'].should == [ "Specified currency does not match the transaction's currency" ]
       end
       it 'should return not_valid_for_auto_capture' do
-        t = @gateway.charge(100, :card => @card_params)
+        t = @gateway.charge(100, :method => @card_params)
         t.capture
         t.errors.present?.should be true
         t.errors['base'].should == [ 'The operation is unavailable for the transaction' ]
@@ -68,7 +68,7 @@ describe "Transaction" do
 
   describe 'void' do
     before :each do
-      @authorized = @gateway.authorize(100, :card => @card_params)
+      @authorized = @gateway.authorize(100, :method => @card_params)
     end
 
     it 'should succeed' do
@@ -86,7 +86,7 @@ describe "Transaction" do
 
     describe 'failures' do
       it 'should return not_valid_for_auto_capture' do
-        t = @gateway.charge(100, :card => @card_params)
+        t = @gateway.charge(100, :method => @card_params)
         t.void
         t.errors.present?.should be true
         t.errors['base'].should == [ 'The operation is unavailable for the transaction' ]
@@ -104,7 +104,7 @@ describe "Transaction" do
   describe 'refund' do
     describe 'on charged' do
       before :each do
-        @authorized = @gateway.charge(100, :card => @card_params)
+        @authorized = @gateway.charge(100, :method => @card_params)
       end
 
       describe 'full refund' do
@@ -168,18 +168,18 @@ describe "Transaction" do
   describe 'credit' do
     describe 'on charged' do
       before :each do
-        @authorized = @gateway.charge(100, :card => @card_params)
+        @authorized = @gateway.charge(100, :method => @card_params)
       end
 
       describe 'full credit' do
         it 'should be successful' do
-          credit = @authorized.refund(100, :card => @card_params.merge(:number => '378282246310005', :type => 'AMERICAN_EXPRESS'), :reference => 'credit ref')
+          credit = @authorized.refund(100, :method => @card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'), :reference => 'credit ref')
           credit.errors.present?.should be false
           credit.messages.present?.should be false
           credit.id.should_not be_nil
           credit.amount.should == 100
           credit.reference.should eq 'credit ref'
-          credit.card[:fingerprint].should_not be_nil
+          credit.method[:fingerprint].should_not be_nil
           credit.type.should eq 'CREDIT'
 
           charge = @gateway.find_charge(@authorized.id)
@@ -190,7 +190,7 @@ describe "Transaction" do
 
       describe 'partial credits' do
         it 'should be successful' do
-          credit = @authorized.refund(50, :card => @card_params.merge(:number => '378282246310005', :type => 'AMERICAN_EXPRESS'))
+          credit = @authorized.refund(50, :method => @card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'))
           credit.errors.present?.should be false
           credit.messages.present?.should be false
           credit.id.should_not be_nil
@@ -201,7 +201,7 @@ describe "Transaction" do
           charge.should_not be_nil
           charge.amount_refunded.should == 50
 
-          credit2 = @authorized.refund(35, :card => @card_params.merge(:number => '378282246310005', :type => 'AMERICAN_EXPRESS'), :reference => 'credit 35')
+          credit2 = @authorized.refund(35, :method => @card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'), :reference => 'credit 35')
           credit2.errors.present?.should be false
           credit2.messages.present?.should be false
           credit2.id.should_not be_nil
@@ -217,32 +217,32 @@ describe "Transaction" do
 
       describe 'credit via payment token' do
         it 'should be successful' do
-          token = @gateway.create_token(@card_params.merge(:number => '378282246310005', :type => 'AMERICAN_EXPRESS'))
-          credit = @authorized.refund(100, :card_id => token.id, :reference => 'Credit via Token')
+          token = @gateway.create_token(@card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'))
+          credit = @authorized.refund(100, :method => token.id, :reference => 'Credit via Token')
           credit.errors.present?.should be false
           credit.messages.present?.should be false
           credit.id.should_not be_nil
           credit.amount.should == 100
           credit.type.should eq 'CREDIT'
           credit.reference.should eq 'Credit via Token'
-          credit.card[:type].should == 'AMERICAN_EXPRESS'
-          credit.card[:number].should == '***********0005'
+          credit.method[:card_type].should == 'AMERICAN_EXPRESS'
+          credit.method[:number].should == '***********0005'
         end
       end
 
       describe 'failures' do
         it 'should return card number not_blank' do
-          credit = @authorized.refund(50, :card => @card_params.merge(:number => ''))
+          credit = @authorized.refund(50, :method => @card_params.merge(:number => ''))
           credit.errors.present?.should be true
-          credit.errors['card.number'].should == [ 'Card number cannot be blank' ]
+          credit.errors['method.number'].should == [ 'Card number cannot be blank' ]
         end
         it 'should return currency_mismatch' do
-          credit = @authorized.refund(Money.new(90, 'GBP'), :card => @card_params)
+          credit = @authorized.refund(Money.new(90, 'GBP'), :method => @card_params)
           credit.errors.present?.should be true
           credit.errors['base'].should == [ "Specified currency does not match the transaction's currency" ]
         end
         it 'should return refund_exceeds_transaction' do
-          credit = @authorized.refund(Money.new(101, 'USD'), :card => @card_params)
+          credit = @authorized.refund(Money.new(101, 'USD'), :method => @card_params)
           credit.errors.present?.should be true
           credit.errors['base'].should == [ 'Amount of refund exceeds remaining transaction balance' ]
         end
