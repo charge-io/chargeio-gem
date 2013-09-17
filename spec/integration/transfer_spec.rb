@@ -20,18 +20,18 @@ describe 'ACH' do
 
   describe 'ach transfers' do
     it 'should create and cancel a new debit' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.clone)
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.clone)
       t.errors.present?.should be false
       t.id.should_not be_nil
       t.status.should eq 'CAPTURED'
       t.type.should eq 'DEBIT'
       t.amount.should == 176
       t.currency.should eq 'USD'
-      t.bank[:routing_number].should eq '******025'
-      t.bank[:account_number].should eq '******7890'
-      t.bank[:account_type].should eq 'CHECKING'
-      t.bank[:fingerprint].should_not be_nil
-      t.bank[:name].should eq 'Some Customer'
+      t.method[:routing_number].should eq '******025'
+      t.method[:account_number].should eq '******7890'
+      t.method[:account_type].should eq 'CHECKING'
+      t.method[:fingerprint].should_not be_nil
+      t.method[:name].should eq 'Some Customer'
 
       t.cancel
       t.errors.present?.should be false
@@ -39,7 +39,7 @@ describe 'ACH' do
       t.status.should eq 'CANCELED'
     end
     it 'should create a new credit' do
-      t = @gateway.merchant.primary_ach_account.credit(Money.new(212, 'USD'), :bank => DEFAULT_ACH_PARAMS.clone)
+      t = @gateway.merchant.primary_ach_account.credit(Money.new(212, 'USD'), :method => DEFAULT_ACH_PARAMS.clone)
       t.errors.present?.should be false
       t.id.should_not be_nil
       t.type.should eq 'CREDIT'
@@ -53,19 +53,19 @@ describe 'ACH' do
       token.messages.present?.should be false
       token.id.should_not be_nil
 
-      t = @gateway.merchant.primary_ach_account.debit(123, :bank_id => token.id)
+      t = @gateway.merchant.primary_ach_account.debit(123, :method => token.id)
       t.errors.present?.should be false
       t.id.should_not be_nil
       t.type.should eq 'DEBIT'
       t.amount.should == 123
       t.currency.should eq 'USD'
-      t.bank[:routing_number].should eq '******025'
-      t.bank[:account_number].should eq '******7890'
-      t.bank[:account_type].should eq 'CHECKING'
-      t.bank[:fingerprint].should_not be_nil
-      t.bank[:name].should eq 'Some Customer'
+      t.method[:routing_number].should eq '******025'
+      t.method[:account_number].should eq '******7890'
+      t.method[:account_type].should eq 'CHECKING'
+      t.method[:fingerprint].should_not be_nil
+      t.method[:name].should eq 'Some Customer'
 
-      expect { @gateway.merchant.primary_ach_account.debit(91, :bank_id => token.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.merchant.primary_ach_account.debit(91, :method => token.id) }.to raise_exception(ChargeIO::ResourceNotFound)
     end
     it 'should create a new transfer from a saved bank' do
       bank = @gateway.create_bank(DEFAULT_ACH_PARAMS.clone)
@@ -74,19 +74,19 @@ describe 'ACH' do
       bank.fingerprint.should_not be_nil
       bank.bank_name.should eq 'BANK OF AMERICA, N.A.'
 
-      t = @gateway.merchant.primary_ach_account.debit(234, :bank_id => bank.id)
+      t = @gateway.merchant.primary_ach_account.debit(234, :method => bank.id)
       t.errors.present?.should be false
       t.id.should_not be_nil
       t.type.should eq 'DEBIT'
       t.amount.should == 234
       t.currency.should eq 'USD'
-      t.bank[:routing_number].should eq '******025'
-      t.bank[:account_number].should eq '******7890'
-      t.bank[:account_type].should eq 'CHECKING'
-      t.bank[:fingerprint].should_not be_nil
-      t.bank[:name].should eq 'Some Customer'
+      t.method[:routing_number].should eq '******025'
+      t.method[:account_number].should eq '******7890'
+      t.method[:account_type].should eq 'CHECKING'
+      t.method[:fingerprint].should_not be_nil
+      t.method[:name].should eq 'Some Customer'
 
-      t = @gateway.merchant.primary_ach_account.credit(201, :bank_id => bank.id)
+      t = @gateway.merchant.primary_ach_account.credit(201, :method => bank.id)
       t.errors.present?.should be false
       t.id.should_not be_nil
       t.type.should eq 'CREDIT'
@@ -95,7 +95,7 @@ describe 'ACH' do
       bank = @gateway.delete_bank(bank.id)
       bank.should_not be_nil
 
-      expect { @gateway.merchant.primary_ach_account.debit(91, :bank_id => bank.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.merchant.primary_ach_account.debit(91, :method => bank.id) }.to raise_exception(ChargeIO::ResourceNotFound)
     end
     it 'should create a new saved bank from a one-time token' do
       token = @gateway.create_token(DEFAULT_ACH_PARAMS.clone)
@@ -113,7 +113,7 @@ describe 'ACH' do
       bank.account_type.should eq token.account_type
       bank.name.should eq token.name
 
-      t = @gateway.merchant.primary_ach_account.credit(211, :bank_id => bank.id)
+      t = @gateway.merchant.primary_ach_account.credit(211, :method => bank.id)
       t.errors.present?.should be false
       t.id.should_not be_nil
       t.type.should eq 'CREDIT'
@@ -124,8 +124,8 @@ describe 'ACH' do
   describe 'retrieving ach transfers' do
     before(:all) do
       @account_pri = @gateway.merchant.primary_ach_account
-      @debit = @account_pri.debit(321, :bank => DEFAULT_ACH_PARAMS.clone, :reference => 'Debit of $3.21')
-      @credit = @account_pri.credit(1962, :bank => DEFAULT_ACH_PARAMS.clone, :reference => 'Credit of $19.62')
+      @debit = @account_pri.debit(321, :method => DEFAULT_ACH_PARAMS.clone, :reference => 'Debit of $3.21')
+      @credit = @account_pri.credit(1962, :method => DEFAULT_ACH_PARAMS.clone, :reference => 'Credit of $19.62')
 
       # Wait a second to give the indexer time to process the transfers
       sleep(1)
@@ -168,61 +168,61 @@ describe 'ACH' do
 
   describe 'transfer failures' do
     it 'should decline the transfer (general case)' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000001'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000001'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Transfer was declined']
     end
     it 'should decline the transfer (hold)' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000002'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000002'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Transfer was declined']
     end
     it 'should decline the transfer as a duplicate' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000003'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000003'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Transfer was declined as a duplicate']
     end
     it 'should reject the transfer with an invalid account number' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000004'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000004'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Account number is invalid']
     end
     it 'should reject the transfer with an invalid routing number' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:routing_number => '111000026'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:routing_number => '111000026'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Routing number is invalid']
     end
     it 'should reject the transfer due to insufficient funds' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000005'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000005'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Transfer was declined due to insufficient funds']
     end
     it 'should reject the transfer due to account not found' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000006'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000006'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Account was not found']
     end
     it 'should reject the transfer due to account closed' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000007'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000007'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Account is closed']
     end
     it 'should reject the transfer due to account not found' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000008'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000008'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Account is frozen']
     end
     it 'should reject the transfer due to limits exceeded' do
-      t = @gateway.merchant.primary_ach_account.debit(176, :bank => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000009'))
+      t = @gateway.merchant.primary_ach_account.debit(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000009'))
       t.errors.present?.should be true
       t.id.should be_nil
       t.errors['base'].should eq ['Transfer was declined due to limits exceeded']
