@@ -1,3 +1,3 @@
-class ChargeIO::Refund < ChargeIO::Base
+class ChargeIO::Refund < ChargeIO::Transaction
 
 end

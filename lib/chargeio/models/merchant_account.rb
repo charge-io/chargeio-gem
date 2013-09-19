@@ -8,8 +8,8 @@ class ChargeIO::MerchantAccount < ChargeIO::Base
     attributes['primary']
   end
 
-  def charges
-    gateway.charges(:account_id => id)
+  def transactions
+    gateway.transactions(:account_id => id)
   end
 
   def authorize(amount, params={})

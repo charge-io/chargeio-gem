@@ -1,4 +1,4 @@
-class ChargeIO::Charge < ChargeIO::Base
+class ChargeIO::Charge < ChargeIO::Transaction
 
   def refunded?
     attributes['refunds'].present?
@@ -6,11 +6,6 @@ class ChargeIO::Charge < ChargeIO::Base
 
   def capture(amount = self.amount, params={})
     res = gateway.capture(id, amount, params)
-    replace(res)
-  end
-
-  def void(params={})
-    res = gateway.void(id, params)
     replace(res)
   end
 

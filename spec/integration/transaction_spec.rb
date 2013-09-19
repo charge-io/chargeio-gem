@@ -71,26 +71,27 @@ describe "Transaction" do
       @authorized = @gateway.authorize(100, :method => @card_params)
     end
 
-    it 'should succeed' do
+    it 'should void the manual capture charge' do
       @authorized.void
       @authorized.errors.present?.should be false
       @authorized.status.should == 'VOIDED'
     end
 
-    it 'should succeed' do
+    it 'should void the manual capture charge with a ref' do
       @authorized.void(:reference => 'cancel ref')
       @authorized.errors.present?.should be false
       @authorized.status.should == 'VOIDED'
       @authorized.void_reference.should eq 'cancel ref'
     end
 
+    it 'should void the auto-capture charge' do
+      t = @gateway.charge(100, :method => @card_params)
+      t.void
+      t.errors.present?.should be false
+      t.status.should eq 'VOIDED'
+    end
+
     describe 'failures' do
-      it 'should return not_valid_for_auto_capture' do
-        t = @gateway.charge(100, :method => @card_params)
-        t.void
-        t.errors.present?.should be true
-        t.errors['base'].should == [ 'The operation is unavailable for the transaction' ]
-      end
       it 'should return not_valid_for_transaction_status' do
         @authorized.void
         @authorized.errors.present?.should be false
@@ -117,7 +118,7 @@ describe "Transaction" do
           refund.reference.should eq 'refund ref'
           refund.type.should eq 'REFUND'
 
-          charge = @gateway.find_charge(@authorized.id)
+          charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
           charge.amount_refunded.should == 100
         end
@@ -132,7 +133,7 @@ describe "Transaction" do
           refund.amount.should == 50
           refund.type.should eq 'REFUND'
 
-          charge = @gateway.find_charge(@authorized.id)
+          charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
           charge.amount_refunded.should == 50
 
@@ -144,7 +145,7 @@ describe "Transaction" do
           refund2.reference.should eq 'partial refund 40'
           refund2.type.should eq 'REFUND'
 
-          charge = @gateway.find_charge(@authorized.id)
+          charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
           charge.amount_refunded.should == 90
         end
@@ -182,7 +183,7 @@ describe "Transaction" do
           credit.method[:fingerprint].should_not be_nil
           credit.type.should eq 'CREDIT'
 
-          charge = @gateway.find_charge(@authorized.id)
+          charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
           charge.amount_refunded.should == 100
         end
@@ -197,7 +198,7 @@ describe "Transaction" do
           credit.amount.should == 50
           credit.type.should eq 'CREDIT'
 
-          charge = @gateway.find_charge(@authorized.id)
+          charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
           charge.amount_refunded.should == 50
 
@@ -209,7 +210,7 @@ describe "Transaction" do
           credit2.reference.should eq 'credit 35'
           credit2.type.should eq 'CREDIT'
 
-          charge = @gateway.find_charge(@authorized.id)
+          charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
           charge.amount_refunded.should == 85
         end

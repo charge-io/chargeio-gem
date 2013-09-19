@@ -406,7 +406,7 @@ describe "Account" do
     end
   end
 
-  describe 'retrieving charges' do
+  describe 'retrieving transactions' do
     before(:all) do
       @account_pri = @gateway.primary_merchant_account
       @account_sec = @gateway.merchant.all_merchant_accounts.find {|a| !a.primary?}
@@ -418,8 +418,27 @@ describe "Account" do
       # Wait a second to give the indexer time to process the charges
       sleep(1)
     end
-    it 'should return the charges created above' do
-      query = @gateway.charges
+    it 'should return the charge' do
+      t = @gateway.find_transaction(@authorized.id)
+      t.should_not be_nil
+      t.id.should eq @authorized.id
+      t.refunded?.should be false
+    end
+    it 'should return the charge with refunds' do
+      t = @gateway.find_transaction(@captured.id)
+      t.should_not be_nil
+      t.id.should eq @captured.id
+      t.refunded?.should be true
+      t.refunds.size.should == 1
+      t.refunds[0]['id'].should == @refund.id
+    end
+    it 'should return the refund' do
+      t = @gateway.find_transaction(@refund.id)
+      t.should_not be_nil
+      t.id.should eq @refund.id
+    end
+    it 'should return the transactions created above' do
+      query = @gateway.transactions
       query.current_page.should == 1
       query.total_pages.should be >= 1
       query.total_entries.should be >= 3
@@ -433,114 +452,37 @@ describe "Account" do
       t = query.find {|t| t.id == @captured.id }
       t.should_not be_nil
       t.type.should eq 'CHARGE'
-      t.refunded?.should be true
+      t.refunded?.should be false
 
-      r = t.refunds.find {|t| t.id == @refund.id }
+      r = query.find {|t| t.id == @refund.id }
       r.should_not be_nil
       r.type.should eq 'REFUND'
       r.amount.should == @refund.amount
     end
-
-    it 'should return the charges created above' do
-      query = @gateway.charges
-      query.current_page.should == 1
-      query.total_pages.should be >= 1
-      query.total_entries.should be >= 2
-      query.size.should >= 2
-
-      t = query.find {|t| t.id == @authorized.id }
-      t.should_not be_nil
-      t.type.should eq 'CHARGE'
-      t.refunded?.should be false
-
-      t = query.find {|t| t.id == @captured.id }
-      t.should_not be_nil
-      t.type.should eq 'CHARGE'
-      t.refunds.size.should == 1
-      t.refunds[0].type.should eq 'REFUND'
-      t.refunds[0].amount.should == 800
-
-      t = query.find {|t| t.id == @refund.id }
-      t.should be_nil
-    end
-    it 'should return the charges created on the primary account only' do
-      query = @account_pri.charges
+    it 'should return the transactions created on the primary account only' do
+      query = @account_pri.transactions
       query.current_page.should == 1
       query.total_pages.should be >= 1
       query.total_entries.should be >= 1
       query.size.should be >= 1
 
-      t = query.find {|t| t.id == @authorized.id }
-      t.should_not be_nil
-      t.type.should eq 'CHARGE'
-      t.refunded?.should be false
-
-      t = query.find {|t| t.id == @captured.id }
-      t.should be_nil
-
-      t = query.find {|t| t.id == @refund.id }
-      t.should be_nil
+      query.find {|t| t.id == @authorized.id }.should_not be_nil
+      query.find {|t| t.id == @captured.id }.should be_nil
+      query.find {|t| t.id == @refund.id }.should be_nil
     end
-    it 'should return the charges created on the secondary account only' do
-      query = @account_sec.charges
+    it 'should return the transactions created on the secondary account only' do
+      query = @account_sec.transactions
       query.current_page.should == 1
       query.total_pages.should be >= 1
       query.total_entries.should be >= 2
       query.size.should be >= 2
 
-      t = query.find {|t| t.id == @captured.id }
-      t.should_not be_nil
-      t.type.should eq 'CHARGE'
-      t.refunded?.should be true
-
-      r = t.refunds.find {|t| t.id == @refund.id }
-      r.should_not be_nil
-      r.type.should eq 'REFUND'
-
-      t = query.find {|t| t.id == @authorized.id }
-      t.should be_nil
+      query.find {|t| t.id == @captured.id }.should_not be_nil
+      query.find {|t| t.id == @refund.id }.should_not be_nil
+      query.find {|t| t.id == @authorized.id }.should be_nil
     end
-    it 'should return the charges created on the primary account only' do
-      query = @account_pri.charges
-      query.current_page.should == 1
-      query.total_pages.should be >= 1
-      query.total_entries.should be >= 1
-      query.size.should be >= 1
-
-      t = query.find {|t| t.id == @authorized.id }
-      t.should_not be_nil
-      t.type.should eq 'CHARGE'
-      t.refunded?.should be false
-
-      t = query.find {|t| t.id == @captured.id }
-      t.should be_nil
-
-      t = query.find {|t| t.id == @refund.id }
-      t.should be_nil
-    end
-    it 'should return the charges created on the secondary account only' do
-      query = @account_sec.charges
-      query.current_page.should == 1
-      query.total_pages.should be >= 1
-      query.total_entries.should be >= 1
-      query.size.should be >= 1
-
-      t = query.find {|t| t.id == @captured.id }
-      t.should_not be_nil
-      t.type.should eq 'CHARGE'
-      t.refunded?.should be true
-      t.refunds[0].type.should eq 'REFUND'
-      t.refunds[0].amount.should == 800
-
-      t = query.find {|t| t.id == @authorized.id }
-      t.should be_nil
-
-      t = query.find {|t| t.id == @refund.id }
-      t.should be_nil
-    end
-
     it 'should return an empty results page' do
-      query = @gateway.charges(:page => 1000000)
+      query = @gateway.transactions(:page => 1000000)
       query.current_page.should == 1000000
       query.total_pages.should be >= 1
       query.total_entries.should be >= 3

@@ -95,19 +95,14 @@ class ChargeIO::Gateway
   end
 
 
-  def charges(params={})
-    response = get(:charges, nil, params)
-    process_list_response(ChargeIO::Charge, response, 'results')
+  def transactions(params={})
+    response = get(:transactions, nil, params)
+    process_list_response(ChargeIO::Transaction, response, 'results')
   end
 
-  def find_charge(transaction_id, params={})
-    response = get(:charges, transaction_id, params)
-    process_response(ChargeIO::Charge, response)
-  end
-
-  def find_refund(refund_id, params={})
-    response = get(:refunds, refund_id, params)
-    process_response(ChargeIO::Refund, response)
+  def find_transaction(transaction_id, params={})
+    response = get(:transactions, transaction_id, params)
+    process_response(ChargeIO::Transaction, response)
   end
 
   def authorize(amount, params={})
@@ -137,8 +132,8 @@ class ChargeIO::Gateway
     if params.has_key?(:ip_address)
       headers['X-Relayed-IP-Address'] = params.delete(:ip_address)
     end
-    response = post("charges/#{transaction_id}/void", params.to_json, headers)
-    process_response(ChargeIO::Charge, response)
+    response = post("transactions/#{transaction_id}/void", params.to_json, headers)
+    process_response(ChargeIO::Transaction, response)
   end
 
   def capture(transaction_id, amount, params={})
@@ -162,38 +157,6 @@ class ChargeIO::Gateway
     response = post("charges/#{transaction_id}/refund", transaction_params.to_json, headers)
     process_response(ChargeIO::Refund, response)
   end
-
-  # ACH transfers
-  def transfers(params={})
-    response = get(:transfers, nil, params)
-    process_list_response(ChargeIO::Transfer, response, 'results')
-  end
-
-  def find_transfer(transfer_id, params={})
-    response = get(:transfers, transfer_id, params)
-    process_response(ChargeIO::Transfer, response)
-  end
-
-  def transfer(amount, params={})
-    headers = {}
-    amount_value, amount_currency = amount_to_parts(amount)
-    if params.has_key?(:ip_address)
-      headers['X-Relayed-IP-Address'] = params.delete(:ip_address)
-    end
-    transfer_params = params.merge(:amount => amount_value, :currency => amount_currency)
-    response = post(:transfers, transfer_params.to_json, headers)
-    process_response(ChargeIO::Transfer, response)
-  end
-
-  def cancel_transfer(transfer_id, params={})
-    headers = {}
-    if params.has_key?(:ip_address)
-      headers['X-Relayed-IP-Address'] = params.delete(:ip_address)
-    end
-    response = post("transfers/#{transfer_id}/cancel", params.to_json, headers)
-    process_response(ChargeIO::Transfer, response)
-  end
-
 
   def merchant_accounts(params={})
     merchant(params).merchant_accounts

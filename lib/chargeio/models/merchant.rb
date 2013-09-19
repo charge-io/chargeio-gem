@@ -43,12 +43,8 @@ class ChargeIO::Merchant < ChargeIO::Base
     replace(res)
   end
 
-  def transfers
-    gateway.transfers()
-  end
-
-  def charges
-    gateway.charges()
+  def transactions
+    gateway.transactions()
   end
 
   def tokens(reference)

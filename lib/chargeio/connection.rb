@@ -56,13 +56,13 @@ module ChargeIO::Connection
     return nil if response.nil? or response.code == 204
     raise ChargeIO::Unauthorized.new "You do not have permissions to access this resource. Please contact ChargeIO for more information" if response.code == 401
     handle_not_found response if response.code == 404
-    #handle_invalid_request response if response.code == 400
 
     attrs = ActiveSupport::JSON.decode(response.body)
     list = attrs['page'].present? ? ChargeIO::Collection.new(attrs['page'],attrs['page_size'],attrs['total_entries']) : []
     if attrs[key].present?
       attrs[key].each do |attributes|
-        list << klass.new(attributes.merge(:gateway => self.gateway))
+        narrowed_klass = narrow_class(attributes, klass)
+        list << narrowed_klass.new(attributes.merge(:gateway => self.gateway))
       end
     end
     list
@@ -72,11 +72,10 @@ module ChargeIO::Connection
     return nil if response.nil? or response.code == 204
     raise ChargeIO::Unauthorized.new "You do not have permissions to access this resource. Please contact ChargeIO for more information" if response.code == 401
     handle_not_found response if response.code == 404
-    #handle_invalid_request response if response.code == 400
 
     attributes = ActiveSupport::JSON.decode(response.body)
-    obj = klass.new attributes.merge(:gateway => gateway)
-#    obj.attributes.merge!(attributes.merge(:gateway => gateway))
+    narrowed_klass = narrow_class(attributes, klass)
+    obj = narrowed_klass.new attributes.merge(:gateway => gateway)
     mod = Module.new do
       obj.attributes.keys.each do |k|
         next if k == "messages"
@@ -93,6 +92,21 @@ module ChargeIO::Connection
     obj.send(:extend, mod)
     obj.process_response_errors(obj.attributes)
     obj
+  end
+
+  def narrow_class(attributes, klass)
+    narrowed_klass = klass
+    if klass == ChargeIO::Transaction
+      transaction_type = attributes['type']
+      case transaction_type
+        when 'CHARGE'
+          narrowed_klass = ChargeIO::Charge
+        when /REFUND|CREDIT/
+          narrowed_klass = ChargeIO::Refund
+      end
+    end
+
+    narrowed_klass
   end
 
   def handle_not_found(response)
