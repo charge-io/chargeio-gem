@@ -181,7 +181,7 @@ describe "Transaction" do
           credit.amount.should == 100
           credit.reference.should eq 'credit ref'
           credit.method[:fingerprint].should_not be_nil
-          credit.type.should eq 'CREDIT'
+          credit.type.should eq 'REFUND'
 
           charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
@@ -196,7 +196,7 @@ describe "Transaction" do
           credit.messages.present?.should be false
           credit.id.should_not be_nil
           credit.amount.should == 50
-          credit.type.should eq 'CREDIT'
+          credit.type.should eq 'REFUND'
 
           charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
@@ -208,7 +208,7 @@ describe "Transaction" do
           credit2.id.should_not be_nil
           credit2.amount.should == 35
           credit2.reference.should eq 'credit 35'
-          credit2.type.should eq 'CREDIT'
+          credit2.type.should eq 'REFUND'
 
           charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
@@ -224,7 +224,7 @@ describe "Transaction" do
           credit.messages.present?.should be false
           credit.id.should_not be_nil
           credit.amount.should == 100
-          credit.type.should eq 'CREDIT'
+          credit.type.should eq 'REFUND'
           credit.reference.should eq 'Credit via Token'
           credit.method[:card_type].should == 'AMERICAN_EXPRESS'
           credit.method[:number].should == '***********0005'
