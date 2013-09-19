@@ -20,6 +20,10 @@ class ChargeIO::MerchantAccount < ChargeIO::Base
     gateway.charge(amount, params.merge(:account_id => id))
   end
 
+  def transfer(amount, params={})
+    gateway.transfer(amount, params.merge(:account_id => id))
+  end
+
   def save
     res = gateway.update_merchant_account(id, attributes)
     replace(res)

@@ -103,6 +103,8 @@ module ChargeIO::Connection
           narrowed_klass = ChargeIO::Charge
         when /REFUND|CREDIT/
           narrowed_klass = ChargeIO::Refund
+        when 'TRANSFER'
+          narrowed_klass = ChargeIO::Transfer
       end
     end
 
