@@ -76,16 +76,22 @@ describe "Transaction" do
       @authorized.errors.present?.should be false
       @authorized.status.should == 'VOIDED'
     end
-
     it 'should void the manual capture charge with a ref' do
       @authorized.void(:reference => 'cancel ref')
       @authorized.errors.present?.should be false
       @authorized.status.should == 'VOIDED'
       @authorized.void_reference.should eq 'cancel ref'
     end
-
     it 'should void the auto-capture charge' do
       t = @gateway.charge(100, :method => @card_params)
+      t.void
+      t.errors.present?.should be false
+      t.status.should eq 'VOIDED'
+    end
+    it 'should allow voiding a charge with a voided refund' do
+      t = @gateway.charge(100, :method => @card_params)
+      r = t.refund(5)
+      r.void
       t.void
       t.errors.present?.should be false
       t.status.should eq 'VOIDED'
@@ -98,6 +104,13 @@ describe "Transaction" do
         @authorized.void
         @authorized.errors.present?.should be true
         @authorized.errors['base'].should == [ 'The operation cannot be completed in the current status' ]
+      end
+      it 'should prevent voiding a transaction with non-voided refunds' do
+        t = @gateway.charge(100, :method => @card_params)
+        t.refund(5)
+        t.void
+        t.errors.present?.should be true
+        t.errors['base'].should == [ 'The operation cannot be completed in the current status' ]
       end
     end
   end
