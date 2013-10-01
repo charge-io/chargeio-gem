@@ -11,9 +11,9 @@ require 'uri'
 
 require 'chargeio/version'
 
-require 'chargeio/errors/unauthorized'
-require 'chargeio/errors/invalid_request'
 require 'chargeio/errors/resource_not_found'
+require 'chargeio/errors/server_error'
+require 'chargeio/errors/unauthorized'
 
 require 'chargeio/connection'
 require 'chargeio/models/collection'

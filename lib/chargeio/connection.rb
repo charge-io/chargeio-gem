@@ -54,8 +54,9 @@ module ChargeIO::Connection
 
   def process_list_response(klass, response, key)
     return nil if response.nil? or response.code == 204
-    raise ChargeIO::Unauthorized.new "You do not have permissions to access this resource. Please contact ChargeIO for more information" if response.code == 401
+    handle_not_authorized if response.code == 401
     handle_not_found response if response.code == 404
+    handle_server_error response if response.code >= 500
 
     attrs = ActiveSupport::JSON.decode(response.body)
     list = attrs['page'].present? ? ChargeIO::Collection.new(attrs['page'],attrs['page_size'],attrs['total_entries']) : []
@@ -70,8 +71,9 @@ module ChargeIO::Connection
 
   def process_response(klass, response)
     return nil if response.nil? or response.code == 204
-    raise ChargeIO::Unauthorized.new "You do not have permissions to access this resource. Please contact ChargeIO for more information" if response.code == 401
+    handle_not_authorized if response.code == 401
     handle_not_found response if response.code == 404
+    handle_server_error response if response.code >= 500
 
     attributes = ActiveSupport::JSON.decode(response.body)
     narrowed_klass = narrow_class(attributes, klass)
@@ -118,16 +120,20 @@ module ChargeIO::Connection
       msg = ChargeIO::Message.new response_json['messages'].first
       raise ChargeIO::ResourceNotFound.new msg.context
     end
-    raise ChargeIO::ResourceNotFound.new "An error occurred. Please contact ChargeIO for more information"
+    raise ChargeIO::ResourceNotFound.new "The requested resource was not found"
   end
 
-  def handle_invalid_request(response)
+  def handle_not_authorized
+    raise ChargeIO::Unauthorized.new "You do not have permission to access this resource"
+  end
+
+  def handle_server_error(response)
     response_json = ActiveSupport::JSON.decode(response.body)
 
     if response_json['messages']
       msg = ChargeIO::Message.new response_json['messages'].first
-      raise ChargeIO::InvalidRequest.new msg
+      raise ChargeIO::ServerError.new msg.message, msg.code, msg.attributes['entity_id']
     end
-    raise ChargeIO::InvalidRequest.new "An error occurred. Please contact ChargeIO for more information"
+    raise ChargeIO::ServerError.new "An unexpected error occurred"
   end
 end

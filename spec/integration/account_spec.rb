@@ -288,6 +288,13 @@ describe "Account" do
       t.errors.present?.should be true
       t.errors['base'].should == [ 'Card type is not accepted' ]
     end
+    it 'should raise a card processing exception' do
+      expect { @gateway.authorize(34, :method => @card_params.merge(:number => '4000000000000143')) }.to raise_exception { |ex|
+        ex.should be_a(ChargeIO::ServerError)
+        ex.code.should == 'card_processing_error'
+        ex.entity_id.should_not be_nil
+      }
+    end
   end
 
   describe 'fail with key mode mismatch (live key on test account)' do

@@ -215,5 +215,12 @@ describe 'ACH' do
       t.id.should be_nil
       t.errors['base'].should eq ['Transfer was declined due to limits exceeded']
     end
+    it 'should raise an ach processing exception' do
+      expect { @gateway.merchant.primary_ach_account.charge(176, :method => DEFAULT_ACH_PARAMS.merge(:account_number => '1000000010')) }.to raise_exception { |ex|
+        ex.should be_a(ChargeIO::ServerError)
+        ex.code.should == 'ach_processing_error'
+        ex.entity_id.should_not be_nil
+      }
+    end
   end
 end
