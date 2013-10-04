@@ -140,7 +140,7 @@ describe 'ACH' do
       t.should_not be_nil
       t.amount.should == 148
       t.reference.should eq 'Refunded $1.48'
-      t.status.should eq 'AUTHORIZED'
+      t.status.should eq 'PENDING'
     end
     it 'should return the transactions created above from the primary account' do
       query = @account_pri.transactions
