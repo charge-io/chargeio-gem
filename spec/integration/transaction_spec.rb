@@ -22,7 +22,7 @@ describe "Transaction" do
         @authorized.capture(100, :reference => 'cap ref 100')
         @authorized.errors.present?.should be false
         @authorized.messages.present?.should be false
-        @authorized.status.should == 'SETTLED'
+        @authorized.status.should == 'COMPLETED'
         @authorized.amount.should == 100
         @authorized.reference.should eq 'auth ref 100'
         @authorized.capture_reference.should eq 'cap ref 100'
@@ -34,7 +34,7 @@ describe "Transaction" do
         @authorized.capture(96)
         @authorized.errors.present?.should be false
         @authorized.messages.present?.should be false
-        @authorized.status.should == 'SETTLED'
+        @authorized.status.should == 'COMPLETED'
         @authorized.amount.should == 96
       end
     end

@@ -60,7 +60,7 @@ describe "Account" do
       t.capture(1256, :reference => 'cap ref 1256')
       t.errors.present?.should be false
       t.messages.present?.should be false
-      t.status.should == 'SETTLED'
+      t.status.should == 'COMPLETED'
       t.amount.should == 1256
       t.reference.should eq 'auth ref 1256'
       t.capture_reference.should eq 'cap ref 1256'
@@ -74,7 +74,7 @@ describe "Account" do
       t.capture(1150, :reference => 'cap ref 1150')
       t.errors.present?.should be false
       t.messages.present?.should be false
-      t.status.should == 'SETTLED'
+      t.status.should == 'COMPLETED'
       t.amount.should == 1150
       t.capture_reference.should eq 'cap ref 1150'
     end
