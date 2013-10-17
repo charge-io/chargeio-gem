@@ -66,7 +66,7 @@ MC_CARD_PARAMS = {
 
 DEFAULT_ACH_PARAMS = {
     type: 'bank',
-    routing_number: '111000025',
+    routing_number: '000000013',
     account_number: '1234567890',
     account_type: 'CHECKING',
     name: 'Some Customer'
