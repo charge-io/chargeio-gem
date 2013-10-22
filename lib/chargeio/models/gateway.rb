@@ -169,6 +169,20 @@ class ChargeIO::Gateway
     process_response(ChargeIO::Transfer, response)
   end
 
+
+  # Events
+
+  def events(params={})
+    response = get(:events, nil, params)
+    process_list_response(ChargeIO::Event, response, 'events')
+  end
+
+  def find_event(event_id, params={})
+    response = get(:events, event_id, params)
+    process_response(ChargeIO::Event, response)
+  end
+
+
   def merchant_accounts(params={})
     merchant(params).merchant_accounts
   end
