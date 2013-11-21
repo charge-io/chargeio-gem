@@ -116,6 +116,39 @@ describe "Transaction" do
   end
 
   describe 'refund' do
+    describe 'manual capture' do
+      before :each do
+        @authorized = @gateway.authorize(100, :method => @card_params, :reference => 'auth ref 100')
+        @authorized.errors.present?.should be false
+        @authorized.id.should_not be_nil
+        @authorized.status.should == 'AUTHORIZED'
+        @authorized.auto_capture.should eq false
+      end
+
+      it 'should be successful' do
+        @authorized.capture(100)
+
+        refund = @authorized.refund(100)
+        refund.id.should_not be_nil
+        refund.errors.present?.should be false
+        refund.messages.present?.should be false
+        refund.amount.should == 100
+        refund.type.should eq 'REFUND'
+        refund.status.should eq 'COMPLETED'
+        refund.auto_capture.should eq false
+
+        charge = @gateway.find_transaction(@authorized.id)
+        charge.should_not be_nil
+        charge.amount_refunded.should == 100
+      end
+
+      it 'should reject refunds for un-captured manual capture charges' do
+        refund = @authorized.refund(100)
+        refund.errors.present?.should be true
+        refund.errors['base'].should == [ "The operation cannot be completed in the current status" ]
+      end
+    end
+
     describe 'on charged' do
       before :each do
         @authorized = @gateway.charge(100, :method => @card_params)
@@ -130,6 +163,8 @@ describe "Transaction" do
           refund.amount.should == 100
           refund.reference.should eq 'refund ref'
           refund.type.should eq 'REFUND'
+          refund.status.should eq 'AUTHORIZED'
+          refund.auto_capture.should eq true
 
           charge = @gateway.find_transaction(@authorized.id)
           charge.should_not be_nil
