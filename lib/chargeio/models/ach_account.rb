@@ -16,8 +16,8 @@ class ChargeIO::AchAccount < ChargeIO::Base
     gateway.charge(amount, params.merge(:account_id => id))
   end
 
-  def transfer(amount, params={})
-    gateway.transfer(amount, params.merge(:account_id => id))
+  def credit(amount, params={})
+    gateway.credit(amount, params.merge(:account_id => id))
   end
 
   def save

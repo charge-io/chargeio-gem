@@ -103,10 +103,10 @@ module ChargeIO::Connection
       case transaction_type
         when 'CHARGE'
           narrowed_klass = ChargeIO::Charge
-        when /REFUND|CREDIT/
+        when 'REFUND'
           narrowed_klass = ChargeIO::Refund
-        when 'TRANSFER'
-          narrowed_klass = ChargeIO::Transfer
+        when 'CREDIT'
+          narrowed_klass = ChargeIO::Credit
       end
     end
 

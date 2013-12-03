@@ -32,6 +32,6 @@ require 'chargeio/models/bank'
 require 'chargeio/models/transaction'
 require 'chargeio/models/charge'
 require 'chargeio/models/refund'
-require 'chargeio/models/transfer'
+require 'chargeio/models/credit'
 
 require 'chargeio/models/event'
