@@ -496,5 +496,71 @@ describe "Account" do
       query.size.should == 0
     end
   end
+
+  describe 'purging test data' do
+    charge = refund = charge2 = token = card = bank = nil
+    before(:each) do
+      charge = @gateway.charge(1400, :method => @card_params)
+      refund = charge.refund(200)
+      charge2 = @gateway.merchant.all_merchant_accounts.find {|a| !a.primary?}.charge(900, :method => @card_params)
+      token = @gateway.create_token(DEFAULT_CARD_PARAMS)
+      card = @gateway.create_card(DEFAULT_CARD_PARAMS)
+      bank = @gateway.create_bank(DEFAULT_ACH_PARAMS)
+    end
+    it 'should delete all the test data' do
+      @gateway.purge_test_data
+      expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_token(token.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_card(card.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_bank(bank.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+    end
+    it 'should only delete all test transactions' do
+      @gateway.purge_test_data(:delete_transactions => true)
+      expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      @gateway.find_token(token.id).should_not be_nil
+      @gateway.find_card(card.id).should_not be_nil
+      @gateway.find_bank(bank.id).should_not be_nil
+    end
+    it 'should only delete test transactions from the primary account' do
+      @gateway.purge_test_data(:delete_transactions => true, :delete_transaction_accounts => charge.account_id)
+      expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      @gateway.find_transaction(charge2.id).should_not be_nil
+      @gateway.find_token(token.id).should_not be_nil
+      @gateway.find_card(card.id).should_not be_nil
+      @gateway.find_bank(bank.id).should_not be_nil
+    end
+    it 'should only delete test transactions from the secondary account' do
+      @gateway.purge_test_data(:delete_transactions => true, :delete_transaction_accounts => charge2.account_id)
+      @gateway.find_transaction(charge.id).should_not be_nil
+      @gateway.find_transaction(refund.id).should_not be_nil
+      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      @gateway.find_token(token.id).should_not be_nil
+      @gateway.find_card(card.id).should_not be_nil
+      @gateway.find_bank(bank.id).should_not be_nil
+    end
+    it 'should delete test transactions from multiple specified accounts' do
+      @gateway.purge_test_data(:delete_transactions => true, :delete_transaction_accounts => charge.account_id + ',' + charge2.account_id)
+      expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      @gateway.find_token(token.id).should_not be_nil
+      @gateway.find_card(card.id).should_not be_nil
+      @gateway.find_bank(bank.id).should_not be_nil
+    end
+    it 'should only delete payment methods' do
+      @gateway.purge_test_data(:delete_payment_methods => true)
+      @gateway.find_transaction(charge.id).should_not be_nil
+      @gateway.find_transaction(refund.id).should_not be_nil
+      @gateway.find_transaction(charge2.id).should_not be_nil
+      expect { @gateway.find_token(token.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_card(card.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+      expect { @gateway.find_bank(bank.id) }.to raise_exception(ChargeIO::ResourceNotFound)
+    end
+  end
 end
 

@@ -183,6 +183,19 @@ class ChargeIO::Gateway
   end
 
 
+  # Test data
+
+  def purge_test_data(params=nil)
+    headers = {}
+    if params and params.has_key?(:ip_address)
+      headers['X-Relayed-IP-Address'] = params.delete(:ip_address)
+    end
+
+    response = post('merchant/purge-test-data', params.to_json, headers)
+    process_response(nil, response)
+  end
+
+
   def merchant_accounts(params={})
     merchant(params).merchant_accounts
   end
