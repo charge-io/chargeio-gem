@@ -1,35 +1,53 @@
-# ChargeIO Ruby gem
+chargeio-gem
+============
 
 Ruby gem to access the chargeIO gateway
 
-TODO: Write a gem description
+Installation
+-----------
 
-## Installation
+To use the library in your application, add the following to your Gemfile:
 
-Add this line to your application's Gemfile:
+    gem 'chargeio', :git => 'git@github.com:charge-io/chargeio-gem.git'
 
-    gem 'chargeio'
+Alternatively, you can download and install the library:
 
-And then execute:
+    git clone git://github.com/charge-io/chargeio-gem.git
+    cd chargeio-gem
+    gem build chargeio.gemspec
+    gem install chargeio-x.x.x.gem
 
-    $ bundle
+Access to the ChargeIO Gateway occurs through an instance of ChargeIO::Gateway. Gateway
+objects require credentials to access your merchant data on the ChargeIO servers. You
+provide credentials as arguments to the construction of a Gateway instance:
 
-Or install it yourself as:
+    gateway = ChargeIO::Gateway.new(:auth_user => api_username, :auth_password => api_password)
 
-    $ gem install chargeio
+substituting your ChargeIO API username and the API password for either your live or test
+accounts.
 
-## Usage
+With your Gateway instance created, running a basic credit card charge looks like:
 
-TODO: Write usage instructions here
+    card = {
+        type: 'card',
+        number: '4242424242424242',
+        exp_month: 10,
+        exp_year: 2020,
+        cvv: 123,
+        name: 'Some Customer'
+    }
+    charge = gateway.charge(100, :method => card, :reference => 'Invoice 12345')
+    
+Using the ChargeIO.js library for payment tokenization support on your payment page
+simplifies the process even more. Just configure the token callback on your page to
+POST the amount and the token ID received to your Ruby web application and then
+perform the charge:
 
-    > gw = ChargeIO::Gateway.new(:site => 'https://api.chargeio.com/', :auth_user => 'myusername', :auth_password => 'mypassword')
-    > gw.merchant
-    > gw.accounts
+    amount = ...
+    token_id = ...
+    charge = gateway.charge(amount, :method => token_id)
+    
+Documentation
+-----------
 
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+The latest ChargeIO API documentation is available at https://chargeio.com/docs/merchant/index.html.
