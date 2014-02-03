@@ -12,16 +12,14 @@ describe "Account" do
       t = @gateway.authorize(1256, :method => @card_params, :reference => 'auth ref 1256')
       t.id.should_not be_nil
       t.errors.present?.should be false
-      t.messages.present?.should be true
-      t.messages.size.should == 3
-      t.messages[0].code.should eq 'card_cvv_matched'
-      t.messages[1].code.should eq 'card_avs_address_matched'
-      t.messages[2].code.should eq 'card_avs_postal_code_matched'
+      t.messages.present?.should be false
       t.amount.should == 1256
       t.currency.should == 'USD'
       t.status.should == 'AUTHORIZED'
       t.reference.should eq 'auth ref 1256'
       t.auto_capture.should be false
+      t.cvv_result.should eq 'MATCHED'
+      t.avs_result.should eq 'ADDRESS_AND_POSTAL_CODE'
     end
     it 'should allow the relayed IP address to perform the operation' do
       t = @gateway.authorize(1256, :method => @card_params, :ip_address => '216.239.32.4')
@@ -41,15 +39,13 @@ describe "Account" do
       t = @gateway.charge(Money.new(1312, 'USD'), :method => @card_params)
       t.id.should_not be_nil
       t.errors.present?.should be false
-      t.messages.present?.should be true
-      t.messages.size.should == 3
-      t.messages[0].code.should eq 'card_cvv_matched'
-      t.messages[1].code.should eq 'card_avs_address_matched'
-      t.messages[2].code.should eq 'card_avs_postal_code_matched'
+      t.messages.present?.should be false
       t.amount.should == 1312
       t.currency.should == 'USD'
       t.status.should == 'AUTHORIZED'
       t.auto_capture.should be true
+      t.cvv_result.should eq 'MATCHED'
+      t.avs_result.should eq 'ADDRESS_AND_POSTAL_CODE'
     end
   end
 
@@ -346,15 +342,13 @@ describe "Account" do
       t = @gateway.authorize(15501, :method => token.id)
       t.id.should_not be_nil
       t.errors.present?.should be false
-      t.messages.present?.should be true
-      t.messages.size.should == 3
-      t.messages[0].code.should eq 'card_cvv_matched'
-      t.messages[1].code.should eq 'card_avs_address_matched'
-      t.messages[2].code.should eq 'card_avs_postal_code_matched'
+      t.messages.present?.should be false
       t.amount.should == 15501
       t.currency.should == 'USD'
       t.status.should == 'AUTHORIZED'
       t.auto_capture.should be false
+      t.cvv_result.should eq 'MATCHED'
+      t.avs_result.should eq 'ADDRESS_AND_POSTAL_CODE'
     end
     it 'should return not found after token is used' do
       token = @gateway.create_token(@card_params)
@@ -378,15 +372,13 @@ describe "Account" do
       t = @gateway.charge(15502, :method => token.id)
       t.id.should_not be_nil
       t.errors.present?.should be false
-      t.messages.present?.should be true
-      t.messages.size.should == 3
-      t.messages[0].code.should eq 'card_cvv_matched'
-      t.messages[1].code.should eq 'card_avs_address_matched'
-      t.messages[2].code.should eq 'card_avs_postal_code_matched'
+      t.messages.present?.should be false
       t.amount.should == 15502
       t.currency.should == 'USD'
       t.status.should == 'AUTHORIZED'
       t.auto_capture.should be true
+      t.cvv_result.should eq 'MATCHED'
+      t.avs_result.should eq 'ADDRESS_AND_POSTAL_CODE'
     end
   end
 
