@@ -293,11 +293,17 @@ describe "Account" do
     end
   end
 
-  describe 'fail with key mode mismatch (live key on test account)' do
+  describe 'fail with key mode mismatch' do
     it 'should return unavailable_for_merchant_mode' do
-      t = @gateway_live.authorize(34, :method => @card_params)
+      account_pri = @gateway.primary_merchant_account
+      t = @gateway_live.authorize(34, :account_id => account_pri.id, :method => @card_params)
       t.errors.present?.should be true
       t.errors['base'].should == [ 'The operation cannot be completed using the configured merchant key' ]
+    end
+    it 'should return no_account_for_payment_method' do
+      t = @gateway_live.authorize(34, :method => @card_params)
+      t.errors.present?.should be true
+      t.errors['base'].should == [ 'Merchant does not have an account that supports the requested payment method' ]
     end
   end
 
