@@ -4,7 +4,7 @@
 
 # Simple class for serializing ChargeIO <message> responses
 class ChargeIO::Message
-  attr_accessor :attributes, :level, :code, :context, :sub_code, :message
+  attr_accessor :attributes, :level, :code, :context, :sub_code, :message, :facility
 
   def initialize(attributes)
     @attributes = attributes
@@ -13,6 +13,7 @@ class ChargeIO::Message
     @sub_code = attributes.with_indifferent_access['sub_code']
     @context = attributes.with_indifferent_access['context']
     @message = attributes.with_indifferent_access['message']
+    @facility = attributes.with_indifferent_access['facility']
   end
 
   DEFAULT_RESPONSE_MAPPINGS = {

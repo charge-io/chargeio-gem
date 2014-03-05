@@ -17,26 +17,29 @@ describe "Transaction" do
       @authorized.auto_capture.should eq false
     end
 
-    describe 'capture full' do
-      it 'should be successful' do
-        @authorized.capture(100, :reference => 'cap ref 100')
-        @authorized.errors.present?.should be false
-        @authorized.messages.present?.should be false
-        @authorized.status.should == 'COMPLETED'
-        @authorized.amount.should == 100
-        @authorized.reference.should eq 'auth ref 100'
-        @authorized.capture_reference.should eq 'cap ref 100'
-      end
+    it 'should fully capture' do
+      @authorized.capture(100, :reference => 'cap ref 100')
+      @authorized.errors.present?.should be false
+      @authorized.messages.present?.should be false
+      @authorized.status.should == 'COMPLETED'
+      @authorized.amount.should == 100
+      @authorized.reference.should eq 'auth ref 100'
+      @authorized.capture_reference.should eq 'cap ref 100'
     end
 
-    describe 'capture partial' do
-      it 'should be successful' do
-        @authorized.capture(96)
-        @authorized.errors.present?.should be false
-        @authorized.messages.present?.should be false
-        @authorized.status.should == 'COMPLETED'
-        @authorized.amount.should == 96
-      end
+    it 'should partial capture' do
+      @authorized.capture(96)
+      @authorized.errors.present?.should be false
+      @authorized.messages.present?.should be false
+      @authorized.status.should == 'COMPLETED'
+      @authorized.amount.should == 96
+    end
+
+    it 'should manually capture auto-capture charge' do
+      @authorized.capture
+      @authorized.errors.present?.should be false
+      @authorized.status.should == 'COMPLETED'
+      @authorized.amount.should == 100
     end
 
     describe 'failures' do
@@ -49,12 +52,6 @@ describe "Transaction" do
         @authorized.capture(Money.new(90, 'GBP'))
         @authorized.errors.present?.should be true
         @authorized.errors['base'].should == [ "Specified currency does not match the transaction's currency" ]
-      end
-      it 'should return not_valid_for_auto_capture' do
-        t = @gateway.charge(100, :method => @card_params)
-        t.capture
-        t.errors.present?.should be true
-        t.errors['base'].should == [ 'The operation is unavailable for the transaction' ]
       end
       it 'should return not_valid_for_transaction_status' do
         @authorized.capture
