@@ -18,13 +18,11 @@ Alternatively, you can download and install the library:
     gem install chargeio-x.x.x.gem
 
 Access to the ChargeIO Gateway occurs through an instance of ChargeIO::Gateway. Gateway
-objects require credentials to access your merchant data on the ChargeIO servers. You
-provide credentials as arguments to the construction of a Gateway instance:
+objects require credentials to access your merchant data on the ChargeIO servers. Your
+credentials consist of either your test or live-mode secret key, specified as the 'auth_user'
+argument to the construction of a Gateway instance:
 
-    gateway = ChargeIO::Gateway.new(:auth_user => api_username, :auth_password => api_password)
-
-substituting your ChargeIO API username and the API password for either your live or test
-accounts.
+    gateway = ChargeIO::Gateway.new(:auth_user => secret_key, :auth_password => '')
 
 With your Gateway instance created, running a basic credit card charge looks like:
 
@@ -50,4 +48,4 @@ perform the charge:
 Documentation
 -----------
 
-The latest ChargeIO API documentation is available at https://chargeio.com/docs/merchant/index.html.
+The latest ChargeIO API documentation is available at https://chargeio.com/developers.
