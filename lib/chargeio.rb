@@ -33,5 +33,7 @@ require 'chargeio/models/transaction'
 require 'chargeio/models/charge'
 require 'chargeio/models/refund'
 require 'chargeio/models/credit'
+require 'chargeio/models/recurring_charge'
+require 'chargeio/models/recurring_charge_occurrence'
 
 require 'chargeio/models/event'
