@@ -54,7 +54,7 @@ module ChargeIO::Connection
 
   def process_list_response(klass, response, key)
     return nil if response.nil? or response.code == 204
-    handle_not_authorized if response.code == 401
+    handle_not_authorized response if response.code == 401
     handle_not_found response if response.code == 404
     handle_server_error response if response.code >= 500
 
@@ -71,7 +71,7 @@ module ChargeIO::Connection
 
   def process_response(klass, response)
     return nil if response.nil? or response.code == 204
-    handle_not_authorized if response.code == 401
+    handle_not_authorized response if response.code == 401
     handle_not_found response if response.code == 404
     handle_server_error response if response.code >= 500
 
@@ -123,7 +123,13 @@ module ChargeIO::Connection
     raise ChargeIO::ResourceNotFound.new "The requested resource was not found"
   end
 
-  def handle_not_authorized
+  def handle_not_authorized(response)
+    response_json = ActiveSupport::JSON.decode(response.body)
+
+    if response_json['messages']
+      msg = ChargeIO::Message.new response_json['messages'].first
+      raise ChargeIO::Unauthorized.new msg.message, msg.attributes['entity_id']
+    end
     raise ChargeIO::Unauthorized.new "You do not have permission to access this resource"
   end
 
