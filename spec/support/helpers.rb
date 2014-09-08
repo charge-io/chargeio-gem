@@ -14,5 +14,12 @@ module ChargeIO
         :expiration_year  => "2015",
       }
     end
+
+    def random_string(length=16)
+      chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+      value = ''
+      length.times { value << chars[rand(chars.size)] }
+      value
+    end
   end
 end

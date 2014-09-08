@@ -169,6 +169,24 @@ class ChargeIO::Gateway
     process_response(ChargeIO::Credit, response)
   end
 
+  def sign(transaction_id, signature, gratuity=nil, format='JSIGNATURE_NATIVE', params={})
+    headers = {}
+    if params.has_key?(:ip_address)
+      headers['X-Relayed-IP-Address'] = params.delete(:ip_address)
+    end
+    transaction_params = params.merge(:format => format, :data => signature)
+    if (gratuity)
+      transaction_params[:gratuity] = gratuity
+    end
+    response = post("transactions/#{transaction_id}/sign", transaction_params.to_json, headers)
+    process_response(ChargeIO::Transaction, response)
+  end
+
+  def find_signature(id)
+    response = get('signatures', id)
+    process_response(ChargeIO::Signature, response)
+  end
+
 
   # Recurring charges
   def recurring_charges(params={})

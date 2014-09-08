@@ -20,6 +20,8 @@ describe "Account" do
       t.auto_capture.should be false
       t.cvv_result.should eq 'MATCHED'
       t.avs_result.should eq 'ADDRESS_AND_POSTAL_CODE'
+      t.attributes.should_not have_key :gratuity
+      t.attributes.should_not have_key :signature_id
     end
     it 'should allow the relayed IP address to perform the operation' do
       t = @gateway.authorize(1256, :method => @card_params, :ip_address => '216.239.32.4')
