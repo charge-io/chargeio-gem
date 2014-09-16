@@ -169,12 +169,12 @@ class ChargeIO::Gateway
     process_response(ChargeIO::Credit, response)
   end
 
-  def sign(transaction_id, signature, gratuity=nil, format='JSIGNATURE_NATIVE', params={})
+  def sign(transaction_id, signature, gratuity=nil, mime_type='chargeio/jsignature', params={})
     headers = {}
     if params.has_key?(:ip_address)
       headers['X-Relayed-IP-Address'] = params.delete(:ip_address)
     end
-    transaction_params = params.merge(:format => format, :data => signature)
+    transaction_params = params.merge(:mime_type => mime_type, :data => signature)
     if (gratuity)
       transaction_params[:gratuity] = gratuity
     end

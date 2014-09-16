@@ -299,7 +299,7 @@ describe "Transaction" do
   describe 'signing transactions' do
     describe 'on authorization' do
       it 'should authorize with signature' do
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => DEFAULT_SIGNATURE_DATA })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -309,11 +309,11 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'JSIGNATURE_NATIVE'
+        s.mime_type.should == 'chargeio/jsignature'
         s.data.should == DEFAULT_SIGNATURE_DATA
       end
       it 'should fail to authorize with signature containing no data' do
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE' })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature' })
         t.id.should be_nil
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
@@ -321,7 +321,7 @@ describe "Transaction" do
         t.messages[0].sub_code.should == 'not_blank'
       end
       it 'should fail to authorize with signature containing empty data' do
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => '' })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => '' })
         t.id.should be_nil
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
@@ -330,7 +330,7 @@ describe "Transaction" do
       end
       it 'should authorize with signature containing data that is maximum length' do
         sigdata = @gateway.random_string(8192)
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => sigdata })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => sigdata })
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -340,11 +340,11 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'JSIGNATURE_NATIVE'
+        s.mime_type.should == 'chargeio/jsignature'
         s.data.should == sigdata
       end
       it 'should fail to authorize with signature containing data that is too long' do
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => @gateway.random_string(8193) })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => @gateway.random_string(8193) })
         t.id.should be_nil
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
@@ -353,7 +353,7 @@ describe "Transaction" do
       end
       it 'should authorize with signature using non-default format' do
         sigdata = @gateway.random_string()
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'OTHER', :data => sigdata })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'something/else', :data => sigdata })
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -363,7 +363,7 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'OTHER'
+        s.mime_type.should == 'something/else'
         s.data.should == sigdata
       end
       it 'should fail to authorize with signature containing no format' do
@@ -371,16 +371,24 @@ describe "Transaction" do
         t.id.should be_nil
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
-        t.messages[0].context.should == 'signature.format'
-        t.messages[0].sub_code.should == 'not_null'
+        t.messages[0].context.should == 'signature.mime_type'
+        t.messages[0].sub_code.should == 'not_blank'
       end
-      it 'should fail to authorize with signature containing invalid format' do
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'invalid', :data => @gateway.random_string() })
+      it 'should fail to authorize with signature containing empty format' do
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => '', :data => @gateway.random_string() })
         t.id.should be_nil
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
-        t.messages[0].context.should == 'signature.format'
-        t.messages[0].sub_code.should == 'invalid'
+        t.messages[0].context.should == 'signature.mime_type'
+        t.messages[0].sub_code.should == 'not_blank'
+      end
+      it 'should fail to authorize with signature containing invalid format' do
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => '01234567890123456789012345678901234567890123456789012345678901234', :data => @gateway.random_string() })
+        t.id.should be_nil
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'invalid_data'
+        t.messages[0].context.should == 'signature.mime_type'
+        t.messages[0].sub_code.should == 'invalid_length'
       end
       it 'should authorize with zero gratuity specified' do
         t = @gateway.authorize(3000, :method => @card_params, :gratuity => 0)
@@ -405,7 +413,7 @@ describe "Transaction" do
         t.messages[0].code.should == 'signature_required'
       end
       it 'should permit refunding the total amount including gratuity' do
-        t = @gateway.charge(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => @gateway.random_string() }, :gratuity => 600)
+        t = @gateway.charge(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => @gateway.random_string() }, :gratuity => 600)
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -425,7 +433,7 @@ describe "Transaction" do
         r2.messages[0].code.should == 'refund_exceeds_transaction'
       end
       it 'should permit refunding the a partial amount including gratuity' do
-        t = @gateway.charge(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => @gateway.random_string() }, :gratuity => 600)
+        t = @gateway.charge(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => @gateway.random_string() }, :gratuity => 600)
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -455,7 +463,7 @@ describe "Transaction" do
         r3.messages[0].code.should == 'refund_exceeds_transaction'
       end
       it 'should prevent refunding more than the total amount with gratuity' do
-        t = @gateway.charge(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => @gateway.random_string() }, :gratuity => 600)
+        t = @gateway.charge(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => @gateway.random_string() }, :gratuity => 600)
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -488,7 +496,7 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'JSIGNATURE_NATIVE'
+        s.mime_type.should == 'chargeio/jsignature'
         s.data.should == DEFAULT_SIGNATURE_DATA
       end
       it 'should sign an authorized charge with a gratuity' do
@@ -513,11 +521,11 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'JSIGNATURE_NATIVE'
+        s.mime_type.should == 'chargeio/jsignature'
         s.data.should == DEFAULT_SIGNATURE_DATA
       end
       it 'should fail to sign a charge that has already been signed' do
-        t = @gateway.authorize(3000, :method => @card_params, :signature => { :format => 'JSIGNATURE_NATIVE', :data => DEFAULT_SIGNATURE_DATA })
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
         t.id.should_not be_nil
         t.errors.present?.should be false
         t.messages.present?.should be false
@@ -527,7 +535,7 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'JSIGNATURE_NATIVE'
+        s.mime_type.should == 'chargeio/jsignature'
         s.data.should == DEFAULT_SIGNATURE_DATA
 
         t.sign(DEFAULT_SIGNATURE_DATA, 600)
@@ -599,7 +607,7 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'JSIGNATURE_NATIVE'
+        s.mime_type.should == 'chargeio/jsignature'
         s.data.should == sigdata
       end
       it 'should fail to sign a charge using a signature with data that is too long' do
@@ -616,7 +624,7 @@ describe "Transaction" do
         t.errors.present?.should be false
 
         sigdata = @gateway.random_string()
-        t.sign(sigdata, nil, 'OTHER')
+        t.sign(sigdata, nil, 'chargeio/other')
         t.errors.present?.should be false
         t.signature_id.should_not be_nil
 
@@ -624,7 +632,7 @@ describe "Transaction" do
         s.should_not be_nil
         s.errors.present?.should be false
         s.messages.present?.should be false
-        s.format.should == 'OTHER'
+        s.mime_type.should == 'chargeio/other'
         s.data.should == sigdata
       end
       it 'should fail to sign a charge using a signature with no format specified' do
@@ -634,18 +642,28 @@ describe "Transaction" do
         t.sign(@gateway.random_string(), nil, nil)
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
-        t.messages[0].context.should == 'format'
-        t.messages[0].sub_code.should == 'not_null'
+        t.messages[0].context.should == 'mime_type'
+        t.messages[0].sub_code.should == 'not_blank'
+      end
+      it 'should fail to sign a charge using a signature with an empty format' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.sign(@gateway.random_string(), nil, '')
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'invalid_data'
+        t.messages[0].context.should == 'mime_type'
+        t.messages[0].sub_code.should == 'not_blank'
       end
       it 'should fail to sign a charge using a signature with an invalid format' do
         t = @gateway.authorize(3000, :method => @card_params)
         t.errors.present?.should be false
 
-        t.sign(@gateway.random_string(), nil, 'invalid')
+        t.sign(@gateway.random_string(), nil, '012345678901234567890123456789012345678901234567890123456789012345')
         t.errors.present?.should be true
         t.messages[0].code.should == 'invalid_data'
-        t.messages[0].context.should == 'format'
-        t.messages[0].sub_code.should == 'invalid'
+        t.messages[0].context.should == 'mime_type'
+        t.messages[0].sub_code.should == 'invalid_length'
       end
       it 'should fail to sign a charge using an invalid gratuity' do
         t = @gateway.authorize(3000, :method => @card_params)
@@ -656,6 +674,155 @@ describe "Transaction" do
         t.messages[0].code.should == 'invalid_data'
         t.messages[0].context.should == 'gratuity'
         t.messages[0].sub_code.should == 'below_minimum_value'
+      end
+    end
+
+    describe 'at capture' do
+      it 'should apply a signature at capture' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(3000, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+        t.amount.should == 3000
+        t.signature_id.should_not be_nil
+        t.attributes.should_not have_key :gratuity
+
+        s = @gateway.find_signature(t.signature_id)
+        s.should_not be_nil
+        s.errors.present?.should be false
+        s.messages.present?.should be false
+        s.mime_type.should == 'chargeio/jsignature'
+        s.data.should == DEFAULT_SIGNATURE_DATA
+      end
+      it 'should apply a signature and gratuity at capture' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(2800, :gratuity => 600, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+        t.amount.should == 2800
+        t.signature_id.should_not be_nil
+        t.gratuity.should == 600
+
+        s = @gateway.find_signature(t.signature_id)
+        s.should_not be_nil
+        s.errors.present?.should be false
+        s.messages.present?.should be false
+        s.mime_type.should == 'chargeio/jsignature'
+        s.data.should == DEFAULT_SIGNATURE_DATA
+      end
+      it 'should apply a signature and zero gratuity at capture' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(2800, :gratuity => 0, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+        t.amount.should == 2800
+        t.signature_id.should_not be_nil
+        t.gratuity.should == 0
+
+        s = @gateway.find_signature(t.signature_id)
+        s.should_not be_nil
+        s.errors.present?.should be false
+        s.messages.present?.should be false
+        s.mime_type.should == 'chargeio/jsignature'
+        s.data.should == DEFAULT_SIGNATURE_DATA
+      end
+      it 'should capture with zero gratuity without a signature' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(2900, :gratuity => 0)
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+        t.amount.should == 2900
+        t.attributes.should_not have_key :signature_id
+        t.attributes.should_not have_key :gratuity
+      end
+      it 'should reject a signature when already signed' do
+        t = @gateway.authorize(3000, :method => @card_params, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
+        t.errors.present?.should be false
+
+        t.capture(3000, :signature => { :mime_type => 'chargeio/jsignature', :data => @gateway.random_string() })
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'not_valid_for_transaction_status'
+        t.status.should == 'AUTHORIZED'
+      end
+      it 'should reject a gratuity without a signature' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(3000, :gratuity => 600)
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'signature_required'
+        t.status.should == 'AUTHORIZED'
+      end
+      it 'should reject an invalid gratuity' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(3000, :gratuity => -1, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'invalid_data'
+        t.messages[0].context.should == 'gratuity'
+        t.messages[0].sub_code.should == 'below_minimum_value'
+        t.status.should == 'AUTHORIZED'
+      end
+      it 'should reject a signature with no data' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(3000, :gratuity => -1, :signature => { :mime_type => 'chargeio/jsignature' })
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'invalid_data'
+        t.messages[0].context.should == 'signature.data'
+        t.messages[0].sub_code.should == 'not_blank'
+        t.status.should == 'AUTHORIZED'
+      end
+      it 'should reject a signature with empty data' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        t.capture(3000, :gratuity => -1, :signature => { :mime_type => 'chargeio/jsignature', :data => '' })
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'invalid_data'
+        t.messages[0].context.should == 'signature.data'
+        t.messages[0].sub_code.should == 'not_blank'
+        t.status.should == 'AUTHORIZED'
+      end
+      it 'should accept a signature with data that is maximum length' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        sigdata = @gateway.random_string(8192)
+        t.capture(3000, :signature => { :mime_type => 'chargeio/other', :data => sigdata })
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+        t.amount.should == 3000
+        t.signature_id.should_not be_nil
+
+        s = @gateway.find_signature(t.signature_id)
+        s.should_not be_nil
+        s.errors.present?.should be false
+        s.messages.present?.should be false
+        s.mime_type.should == 'chargeio/other'
+        s.data.should == sigdata
+      end
+      it 'should reject a signature with data that is too long' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.errors.present?.should be false
+
+        sigdata = @gateway.random_string(8193)
+        t.capture(3000, :signature => { :mime_type => 'chargeio/other', :data => sigdata })
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'invalid_data'
+        t.messages[0].context.should == 'signature.data'
+        t.messages[0].sub_code.should == 'invalid_length'
+        t.status.should == 'AUTHORIZED'
       end
     end
   end
