@@ -18,6 +18,10 @@ class ChargeIO::Base
 
   end
 
+  def inspect(full_output=false)
+    full_output ? super() : attributes.inspect
+  end
+
   def as_json(options={})
     { 'attributes' => @attributes, 'errors' => @errors, 'messages' => @messages}
   end
