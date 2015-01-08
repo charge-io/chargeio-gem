@@ -19,10 +19,10 @@ Alternatively, you can download and install the library:
 
 Access to the ChargeIO Gateway occurs through an instance of ChargeIO::Gateway. Gateway
 objects require credentials to access your merchant data on the ChargeIO servers. Your
-credentials consist of either your test or live-mode secret key, specified as the 'auth_user'
+credentials consist of either your test or live-mode secret key, specified as an
 argument to the construction of a Gateway instance:
 
-    gateway = ChargeIO::Gateway.new(:auth_user => secret_key, :auth_password => '')
+    gateway = ChargeIO::Gateway.new(:secret_key => secret_key)
 
 With your Gateway instance created, running a basic credit card charge looks like:
 

@@ -5,12 +5,25 @@ class ChargeIO::Gateway
     @site = options[:site] || ChargeIO::DEFAULT_SITE
     @url = URI.join(@site, "/v1/")
 
-    @auth = {
-      :username =>options[:auth_user],
-      :password => options[:auth_password]
-    }
-    raise ArgumentError.new("auth_user not set") if @auth[:username].nil?
-    raise ArgumentError.new("auth_password not set") if @auth[:password].nil?
+    if options[:auth_user].nil?
+      @auth = {
+        :username => options[:secret_key],
+        :password => '',
+      }
+      raise ArgumentError.new("secret_key not set") if @auth[:username].nil?
+    else
+      puts "DEPRECATION WARNING:"
+      puts "You're using an old style authentication mechanism (:auth_user and :auth_password)."
+      puts "Please use your secret_key instead and instantiate the Gateway Object like this:"
+      puts "ChargeIO::Gateway.new(:secret_key => 'your secret key')"
+      puts ""
+      @auth = {
+        :username => options[:auth_user],
+        :password => options[:auth_password],
+      }
+      raise ArgumentError.new("auth_user not set") if @auth[:username].nil?
+      raise ArgumentError.new("auth_password not set") if @auth[:password].nil?
+    end
   end
 
   def as_json(options={})
