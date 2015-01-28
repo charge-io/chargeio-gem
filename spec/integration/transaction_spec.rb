@@ -566,16 +566,6 @@ describe "Transaction" do
         t.errors.present?.should be true
         t.messages[0].code.should == 'not_valid_for_transaction_status'
       end
-      it 'should fail to sign a charge that is completed' do
-        t = @gateway.authorize(3000, :method => @card_params)
-        t.capture
-        t.errors.present?.should be false
-        t.status.should == 'COMPLETED'
-
-        t.sign(DEFAULT_SIGNATURE_DATA)
-        t.errors.present?.should be true
-        t.messages[0].code.should == 'not_valid_for_transaction_status'
-      end
       it 'should fail to sign a charge using a signature with no data' do
         t = @gateway.authorize(3000, :method => @card_params)
         t.errors.present?.should be false
@@ -823,6 +813,52 @@ describe "Transaction" do
         t.messages[0].context.should == 'signature.data'
         t.messages[0].sub_code.should == 'invalid_length'
         t.status.should == 'AUTHORIZED'
+      end
+    end
+
+    describe 'post capture' do
+      it 'should sign a captured transaction with no gratuity' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.capture
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+
+        t.sign(DEFAULT_SIGNATURE_DATA)
+        t.errors.present?.should be false
+        t.signature_id.should_not be_nil
+
+        s = @gateway.find_signature(t.signature_id)
+        s.should_not be_nil
+        s.errors.present?.should be false
+        s.messages.present?.should be false
+        s.mime_type.should == 'chargeio/jsignature'
+        s.data.should == DEFAULT_SIGNATURE_DATA
+      end
+      it 'should fail to sign a captured transaction with gratuity' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.capture
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+
+        t.sign(DEFAULT_SIGNATURE_DATA, 500)
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'not_valid_for_transaction_status'
+        t.attributes.should_not have_key(:signature_id)
+      end
+      it 'should fail to sign a captured transaction that has already been signed' do
+        t = @gateway.authorize(3000, :method => @card_params)
+        t.capture(3000, :signature => { :mime_type => 'chargeio/jsignature', :data => DEFAULT_SIGNATURE_DATA })
+        t.errors.present?.should be false
+        t.status.should == 'COMPLETED'
+        t.amount.should == 3000
+        t.signature_id.should_not be_nil
+        t.attributes.should_not have_key :gratuity
+        sig_id = t.signature_id
+
+        t.sign(DEFAULT_SIGNATURE_DATA, 500)
+        t.errors.present?.should be true
+        t.messages[0].code.should == 'not_valid_for_transaction_status'
+        t.signature_id.should == sig_id
       end
     end
   end
