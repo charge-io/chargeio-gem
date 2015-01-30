@@ -29,9 +29,14 @@ describe "Account" do
       t.errors.present?.should be false
       t.status.should == 'AUTHORIZED'
     end
-    it 'should reject the charge operation due to IP outside of countries list' do
+    it 'should reject the charge operation due to IP outside of countries list and amount beyond default foreign country exception limit' do
       expect {
-        @gateway.authorize(1256, :method => @card_params, :ip_address => '95.27.173.123')
+        @gateway.authorize(50000, :method => @card_params, :ip_address => '95.27.173.123')
+      }.to raise_exception(ChargeIO::Unauthorized)
+    end
+    it 'should reject the charge operation due to IP from a prohibited country' do
+      expect {
+        @gateway.authorize(500, :method => @card_params, :ip_address => '190.92.112.1')
       }.to raise_exception(ChargeIO::Unauthorized)
     end
   end
