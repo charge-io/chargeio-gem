@@ -4,7 +4,7 @@ describe 'Gateway' do
 
   before(:all) do
     @gateway = ChargeIO::Gateway.new(DEFAULT_MERCHANT_TEST_MODE_OPTIONS.clone)
-    @invalid_gateway = ChargeIO::Gateway.new(:auth_user => 'invalid', :auth_password =>' invalid')
+    @invalid_gateway = ChargeIO::Gateway.new(:secret_key => 'invalid')
   end
 
   describe 'with invalid credentials' do

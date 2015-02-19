@@ -1,10 +1,13 @@
 module ChargeIO::Connection
+  DEFAULT_TIMEOUT = 300
+
   private
 
   def get(uri, id=nil, params={}, headers={})
     request = HTTParty::Request.new(Net::HTTP::Get,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
                                     :headers => headers.merge({'content-type' => 'application/json'}),
+                                    :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
                                     :default_params => params,
                                     :basic_auth => self.gateway.auth)
@@ -15,8 +18,9 @@ module ChargeIO::Connection
     request = HTTParty::Request.new(Net::HTTP::Post,
                                     "#{self.gateway.url}#{uri}",
                                     :headers => headers.merge({'content-type' => 'application/json'}),
-                                    :body => params,
+                                    :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
+                                    :body => params,
                                     :basic_auth => self.gateway.auth)
     request.perform
   end
@@ -26,8 +30,9 @@ module ChargeIO::Connection
     request = HTTParty::Request.new(Net::HTTP::Post,
                                     "#{self.gateway.url}#{uri}",
                                     :headers => headers.merge({'content-type' => 'application/x-www-form-urlencoded'}),
-                                    :body => params_urlenc,
+                                    :timeout => DEFAULT_TIMEOUT,
                                     :format => :plain,
+                                    :body => params_urlenc,
                                     :basic_auth => self.gateway.auth)
     request.perform
   end
@@ -36,8 +41,20 @@ module ChargeIO::Connection
     request = HTTParty::Request.new(Net::HTTP::Put,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
                                     :headers => headers.merge({'content-type' => 'application/json'}),
-                                    :body => params,
+                                    :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
+                                    :body => params,
+                                    :basic_auth => self.gateway.auth)
+    request.perform
+  end
+
+  def patch(uri, id, params, headers={})
+    request = HTTParty::Request.new(Net::HTTP::Patch,
+                                    id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
+                                    :headers => headers.merge({'content-type' => 'application/json'}),
+                                    :timeout => DEFAULT_TIMEOUT,
+                                    :format => :json,
+                                    :body => params,
                                     :basic_auth => self.gateway.auth)
     request.perform
   end
@@ -46,6 +63,7 @@ module ChargeIO::Connection
     request = HTTParty::Request.new(Net::HTTP::Delete,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
                                     :headers => headers,
+                                    :timeout => DEFAULT_TIMEOUT,
                                     #:format => :json,
                                     #:body => '',
                                     :basic_auth => self.gateway.auth)

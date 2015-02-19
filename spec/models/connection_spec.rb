@@ -31,7 +31,7 @@ describe "ChargeIO::Connection" do
         }
         json
 
-        response = stub(:code => 404, :body => body)
+        response = double(:code => 404, :body => body)
 
         foo = Foo.new
 

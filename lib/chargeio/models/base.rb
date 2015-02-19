@@ -7,8 +7,9 @@ class ChargeIO::Base
       @gateway = _attributes.delete(:gateway)
     else
       @gateway = ChargeIO::Gateway.new(:site => _attributes.delete(:site) || ChargeIO::DEFAULT_SITE,
-                                         :auth_user => _attributes.delete(:auth_user),
-                                         :auth_password => _attributes.delete(:auth_password))
+                                       :secret_key => _attributes.delete(:secret_key),
+                                       :auth_user => _attributes.delete(:auth_user),
+                                       :auth_password => _attributes.delete(:auth_password))
     end
     raise ArgumentError.new("Gateway not set") unless gateway
 
@@ -16,6 +17,10 @@ class ChargeIO::Base
     @errors     = {}
     @messages   = []
 
+  end
+
+  def inspect(full_output=false)
+    full_output ? super() : attributes.inspect
   end
 
   def as_json(options={})

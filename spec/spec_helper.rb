@@ -27,14 +27,16 @@ require 'chargeio'
 
 DEFAULT_MERCHANT_TEST_MODE_OPTIONS = {
   :site => ENV['site'] || SITE,
-  :auth_user => ENV['auth_user'] || 'm_wKgFeD0hHlaBPSGgaAQAAA',
-  :auth_password => ENV['auth_password'] || 'E39rPZuZnK9716EgreDTGd57cd6ljoMX'
+  :secret_key => ENV['secret_key'] || 'akZdI3PuQOWiAX9Vbrnosg000000000000000000000000000000000000000002',
+  # :auth_user => ENV['auth_user'] || 'm_wKgFeD0hHlaBPSGgaAQAAA',
+  # :auth_password => ENV['auth_password'] || 'E39rPZuZnK9716EgreDTGd57cd6ljoMX'
 }
 
 DEFAULT_MERCHANT_LIVE_MODE_OPTIONS = {
     :site => ENV['site'] || SITE,
-    :auth_user => ENV['auth_user'] || 'm_wKgFeD0hHlaBPSGgaAQAAA',
-    :auth_password => ENV['auth_password'] || 'puz9RoLk3u27BzXG6GL1TUF7VFoWplpU'
+    :secret_key => ENV['secret_key'] || 'APdrbx2PTqyPxKv3cetbww000000000000000000000000000000000000000002',
+    # :auth_user => ENV['auth_user'] || 'm_wKgFeD0hHlaBPSGgaAQAAA',
+    # :auth_password => ENV['auth_password'] || 'puz9RoLk3u27BzXG6GL1TUF7VFoWplpU'
 }
 
 DEFAULT_CARD_PARAMS = {
