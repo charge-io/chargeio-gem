@@ -121,7 +121,7 @@ describe "Token" do
       transaction.errors['base'].should == [ 'Card is expired' ]
     end
     it 'should return invalid' do
-      token = @gateway.create_token(@token_params.merge(:exp_month => 'Feb'))
+      token = @gateway.create_token(@token_params.merge(:exp_month => 'Feb'), 'form')
       token.errors.present?.should be false
 
       transaction = @gateway.authorize(100, :method => token.id)
@@ -129,7 +129,7 @@ describe "Token" do
       transaction.errors['method.exp_month'].should == [ 'Expiration month cannot be blank' ]
     end
     it 'should return invalid' do
-      token = @gateway.create_token(@token_params.merge(:exp_year => '201B'))
+      token = @gateway.create_token(@token_params.merge(:exp_year => '201B'), 'form')
       token.errors.present?.should be false
 
       transaction = @gateway.authorize(100, :method => token.id)

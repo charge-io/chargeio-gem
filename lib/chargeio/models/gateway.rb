@@ -55,8 +55,13 @@ class ChargeIO::Gateway
     process_response(ChargeIO::AchAccount, response)
   end
 
-  def create_token(params={})
-    response = form_post(:tokens, params)
+  def create_token(params={}, encoding='json')
+    response = nil
+    if encoding == 'form'
+      response = form_post(:tokens, params)
+    else
+      response = post(:tokens, params.to_json)
+    end
     process_response(ChargeIO::Token, response)
   end
 
