@@ -132,7 +132,7 @@ describe "Transaction" do
         refund.amount.should == 100
         refund.type.should eq 'REFUND'
         refund.status.should eq 'COMPLETED'
-        refund.auto_capture.should eq false
+        refund.auto_capture.should eq true
 
         charge = @gateway.find_transaction(@authorized.id)
         charge.should_not be_nil

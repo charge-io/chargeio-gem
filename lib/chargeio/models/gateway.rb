@@ -145,6 +145,11 @@ class ChargeIO::Gateway
     process_response(ChargeIO::Charge, response)
   end
 
+  def holds(params={})
+    response = get('charges/holds', nil, params)
+    process_list_response(ChargeIO::Charge, response, 'results')
+  end
+
   def void(transaction_id, params={})
     headers = {}
     if params.has_key?(:ip_address)
