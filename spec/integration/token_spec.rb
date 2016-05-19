@@ -253,29 +253,32 @@ describe "Token" do
       transaction.method[:postal_code].should == '7872662A';
     end
 
-    it 'should return invalid_length' do
+    it 'should authorize with empty country due to too-short invalid country code' do
       token = @gateway.create_token(@token_params.merge(:country => 'U'))
       token.errors.present?.should be false
-
-      transaction = @gateway.authorize(100, :method => token.id)
-      transaction.errors.present?.should be true
-      transaction.errors['method.country'].should == [ 'Country length is invalid' ]
-    end
-    it 'should accept due to country truncation to valid code' do
-      token = @gateway.create_token(@token_params.merge(:country => 'USA'))
-      token.errors.present?.should be false
+      token.should_not have_key :country
 
       transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
-      transaction.method[:country].should == 'US'
+      transaction.attributes['method'].should_not have_key :country
     end
-    it 'should return invalid' do
-      token = @gateway.create_token(@token_params.merge(:country => 'ZZ'))
+    it 'should authorize with empty country due to too-long invalid country code' do
+      token = @gateway.create_token(@token_params.merge(:country => 'USA'))
       token.errors.present?.should be false
+      token.should_not have_key :country
 
       transaction = @gateway.authorize(100, :method => token.id)
-      transaction.errors.present?.should be true
-      transaction.errors['method.country'].should == [ 'Country is invalid' ]
+      transaction.errors.present?.should be false
+      transaction.attributes['method'].should_not have_key :country
+    end
+    it 'should authorize with empty country due to invalid country code' do
+      token = @gateway.create_token(@token_params.merge(:country => 'ZZ'))
+      token.errors.present?.should be false
+      token.should_not have_key :country
+
+      transaction = @gateway.authorize(100, :method => token.id)
+      transaction.errors.present?.should be false
+      transaction.attributes['method'].should_not have_key :country
     end
   end
 
