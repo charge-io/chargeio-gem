@@ -48,4 +48,4 @@ perform the charge:
 Documentation
 -----------
 
-The latest ChargeIO API documentation is available at https://chargeio.com/developers.
+The latest ChargeIO API documentation is available at https://developers.affinipay.com/reference/api.html#PaymentGatewayAPI.
