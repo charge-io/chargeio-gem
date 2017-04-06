@@ -11,13 +11,11 @@ require 'money'
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
-SITE = 'http://local.chargeio.com:8080/'
-USE_MOCK = !ENV['site']
+SITE = 'https://api.chargeio.com/'
 
-RSpec.configure do |c|
-  c.before :each do
-    #
-    #
+RSpec.configure do |config|
+  config.expect_with :rspec do |c|
+    c.syntax = [:should, :expect]
   end
 end
 
@@ -27,16 +25,7 @@ require 'chargeio'
 
 DEFAULT_MERCHANT_TEST_MODE_OPTIONS = {
   :site => ENV['site'] || SITE,
-  :secret_key => ENV['secret_key'] || 'akZdI3PuQOWiAX9Vbrnosg000000000000000000000000000000000000000002',
-  # :auth_user => ENV['auth_user'] || 'm_wKgFeD0hHlaBPSGgaAQAAA',
-  # :auth_password => ENV['auth_password'] || 'E39rPZuZnK9716EgreDTGd57cd6ljoMX'
-}
-
-DEFAULT_MERCHANT_LIVE_MODE_OPTIONS = {
-    :site => ENV['site'] || SITE,
-    :secret_key => ENV['secret_key'] || 'APdrbx2PTqyPxKv3cetbww000000000000000000000000000000000000000002',
-    # :auth_user => ENV['auth_user'] || 'm_wKgFeD0hHlaBPSGgaAQAAA',
-    # :auth_password => ENV['auth_password'] || 'puz9RoLk3u27BzXG6GL1TUF7VFoWplpU'
+  :secret_key => ENV['secret_key']
 }
 
 DEFAULT_CARD_PARAMS = {
@@ -49,7 +38,7 @@ DEFAULT_CARD_PARAMS = {
     name: 'Some Customer',
     address1: '123 Main St',
     postal_code: '78730',
-    email_address: 'customer@somebidness.com'
+    email_address: 'customer@example.com'
 }
 
 MC_CARD_PARAMS = {
@@ -63,7 +52,7 @@ MC_CARD_PARAMS = {
     address1: '123 N. Main St.',
     address2: 'Apt. 4-D',
     postal_code: '99997-0008',
-    email_address: 'mc_user@somebidness.com'
+    email_address: 'mc_user@example.com'
 }
 
 DEFAULT_ACH_PARAMS = {

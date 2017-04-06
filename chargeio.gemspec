@@ -6,8 +6,8 @@ require 'chargeio/version'
 Gem::Specification.new do |gem|
   gem.name          = "chargeio"
   gem.version       = ChargeIO::VERSION
-  gem.authors       = ["Enrico Brunetta", "James Sparrow"]
-  gem.email         = ["enrico@chargeIO.com", "james@chargeIO.com"]
+  gem.authors       = ["James Sparrow"]
+  gem.email         = ["james@affinipay.com"]
   gem.description   = "ChargeIO Merchant Gem"
   gem.license       = 'MIT'
   gem.summary       = ""
@@ -19,7 +19,7 @@ Gem::Specification.new do |gem|
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "bundler", ">= 1.0.0"
-  gem.add_development_dependency "rspec", ">= 2.6.0"
+  gem.add_development_dependency "rspec", ">= 3.5.0"
   gem.add_development_dependency "money"
 
   if RUBY_VERSION =~ /^1\.9/

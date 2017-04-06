@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe "Account" do
   before(:all) do
+    skip("No secret_key specified in environment") unless ENV['secret_key']
     @gateway = ChargeIO::Gateway.new(DEFAULT_MERCHANT_TEST_MODE_OPTIONS.clone)
-    @gateway_live = ChargeIO::Gateway.new(DEFAULT_MERCHANT_LIVE_MODE_OPTIONS.clone)
     @card_params = DEFAULT_CARD_PARAMS.clone
   end
 
@@ -300,50 +300,6 @@ describe "Account" do
     end
   end
 
-  describe 'fail with key mode mismatch' do
-    it 'should return unavailable_for_merchant_mode' do
-      account_pri = @gateway.primary_merchant_account
-      t = @gateway_live.authorize(34, :account_id => account_pri.id, :method => @card_params)
-      t.errors.present?.should be true
-      t.errors['base'].should == [ 'The operation cannot be completed using the configured merchant key' ]
-    end
-    it 'should return no_account_for_payment_method' do
-      t = @gateway_live.authorize(34, :method => @card_params)
-      t.errors.present?.should be true
-      t.errors['base'].should == [ 'Merchant does not have an account that supports the requested payment method' ]
-    end
-  end
-
-  describe 'authorize via non-primary account' do
-    it 'should be successful' do
-      account = @gateway.merchant.all_merchant_accounts.find {|a| !a.primary?}
-      account.should_not be_nil
-      t = account.authorize(1256, :method => @card_params)
-      t.id.should_not be_nil
-      t.errors.present?.should be false
-      t.account_id.should eq account.id
-      t.amount.should == 1256
-      t.currency.should == 'USD'
-      t.status.should == 'AUTHORIZED'
-      t.auto_capture.should be false
-    end
-  end
-
-  describe 'charge via non-primary account' do
-    it 'should be successful' do
-      account = @gateway.merchant.all_merchant_accounts.find {|a| !a.primary?}
-      account.should_not be_nil
-      t = account.charge(1257, :method => @card_params)
-      t.id.should_not be_nil
-      t.errors.present?.should be false
-      t.account_id.should eq account.id
-      t.amount.should == 1257
-      t.currency.should == 'USD'
-      t.status.should == 'AUTHORIZED'
-      t.auto_capture.should be true
-    end
-  end
-
   describe 'authorize with a one-time token' do
     it 'should be successful' do
       token = @gateway.create_token(@card_params)
@@ -420,14 +376,13 @@ describe "Account" do
 
   describe 'retrieving transactions' do
     before(:all) do
-      @account_pri = @gateway.primary_merchant_account
-      @account_sec = @gateway.merchant.all_merchant_accounts.find {|a| !a.primary?}
-      @authorized = @account_pri.authorize(8955, :method => @card_params, :authorization_reference => '122')
-      @captured = @account_sec.authorize(36529, :method => @card_params, :authorization_reference => '341')
+      @account = @gateway.primary_merchant_account
+      @authorized = @account.authorize(8955, :method => @card_params, :authorization_reference => '122')
+      @captured = @account.authorize(36529, :method => @card_params, :authorization_reference => '341')
       @captured.capture
       @refund = @captured.refund(800)
 
-      # Wait a second to give the indexer time to process the charges
+      # Wait a second to ensure propagation to the search indexes
       sleep(1)
     end
     it 'should return the charge' do
@@ -471,28 +426,6 @@ describe "Account" do
       r.type.should eq 'REFUND'
       r.amount.should == @refund.amount
     end
-    it 'should return the transactions created on the primary account only' do
-      query = @account_pri.transactions
-      query.current_page.should == 1
-      query.total_pages.should be >= 1
-      query.total_entries.should be >= 1
-      query.size.should be >= 1
-
-      query.find {|t| t.id == @authorized.id }.should_not be_nil
-      query.find {|t| t.id == @captured.id }.should be_nil
-      query.find {|t| t.id == @refund.id }.should be_nil
-    end
-    it 'should return the transactions created on the secondary account only' do
-      query = @account_sec.transactions
-      query.current_page.should == 1
-      query.total_pages.should be >= 1
-      query.total_entries.should be >= 2
-      query.size.should be >= 2
-
-      query.find {|t| t.id == @captured.id }.should_not be_nil
-      query.find {|t| t.id == @refund.id }.should_not be_nil
-      query.find {|t| t.id == @authorized.id }.should be_nil
-    end
     it 'should return an empty results page' do
       query = @gateway.transactions(:page => 1000000)
       query.current_page.should == 1000000
@@ -503,11 +436,10 @@ describe "Account" do
   end
 
   describe 'purging test data' do
-    charge = refund = charge2 = token = card = bank = nil
+    charge = refund = token = card = bank = nil
     before(:each) do
       charge = @gateway.charge(1400, :method => @card_params)
       refund = charge.refund(200)
-      charge2 = @gateway.merchant.all_merchant_accounts.find {|a| !a.primary?}.charge(900, :method => @card_params)
       token = @gateway.create_token(DEFAULT_CARD_PARAMS)
       card = @gateway.create_card(DEFAULT_CARD_PARAMS)
       bank = @gateway.create_bank(DEFAULT_ACH_PARAMS)
@@ -516,7 +448,6 @@ describe "Account" do
       @gateway.purge_test_data
       expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_token(token.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_card(card.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_bank(bank.id) }.to raise_exception(ChargeIO::ResourceNotFound)
@@ -525,34 +456,6 @@ describe "Account" do
       @gateway.purge_test_data(:delete_transactions => true)
       expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      @gateway.find_token(token.id).should_not be_nil
-      @gateway.find_card(card.id).should_not be_nil
-      @gateway.find_bank(bank.id).should_not be_nil
-    end
-    it 'should only delete test transactions from the primary account' do
-      @gateway.purge_test_data(:delete_transactions => true, :delete_transaction_accounts => charge.account_id)
-      expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      @gateway.find_transaction(charge2.id).should_not be_nil
-      @gateway.find_token(token.id).should_not be_nil
-      @gateway.find_card(card.id).should_not be_nil
-      @gateway.find_bank(bank.id).should_not be_nil
-    end
-    it 'should only delete test transactions from the secondary account' do
-      @gateway.purge_test_data(:delete_transactions => true, :delete_transaction_accounts => charge2.account_id)
-      @gateway.find_transaction(charge.id).should_not be_nil
-      @gateway.find_transaction(refund.id).should_not be_nil
-      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      @gateway.find_token(token.id).should_not be_nil
-      @gateway.find_card(card.id).should_not be_nil
-      @gateway.find_bank(bank.id).should_not be_nil
-    end
-    it 'should delete test transactions from multiple specified accounts' do
-      @gateway.purge_test_data(:delete_transactions => true, :delete_transaction_accounts => charge.account_id + ',' + charge2.account_id)
-      expect { @gateway.find_transaction(charge.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      expect { @gateway.find_transaction(refund.id) }.to raise_exception(ChargeIO::ResourceNotFound)
-      expect { @gateway.find_transaction(charge2.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       @gateway.find_token(token.id).should_not be_nil
       @gateway.find_card(card.id).should_not be_nil
       @gateway.find_bank(bank.id).should_not be_nil
@@ -561,7 +464,6 @@ describe "Account" do
       @gateway.purge_test_data(:delete_payment_methods => true)
       @gateway.find_transaction(charge.id).should_not be_nil
       @gateway.find_transaction(refund.id).should_not be_nil
-      @gateway.find_transaction(charge2.id).should_not be_nil
       expect { @gateway.find_token(token.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_card(card.id) }.to raise_exception(ChargeIO::ResourceNotFound)
       expect { @gateway.find_bank(bank.id) }.to raise_exception(ChargeIO::ResourceNotFound)

@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe "Transaction" do
   before(:all) do
+    skip("No secret_key specified in environment") unless ENV['secret_key']
     @gateway = ChargeIO::Gateway.new(DEFAULT_MERCHANT_TEST_MODE_OPTIONS.clone)
-    @gateway_live = ChargeIO::Gateway.new(DEFAULT_MERCHANT_LIVE_MODE_OPTIONS.clone)
     @card_params = DEFAULT_CARD_PARAMS.clone
   end
 
@@ -206,91 +206,6 @@ describe "Transaction" do
           refund = @authorized.refund(Money.new(101, 'USD'))
           refund.errors.present?.should be true
           refund.errors['base'].should == [ 'Amount of refund exceeds remaining transaction balance' ]
-        end
-      end
-    end
-  end
-
-  describe 'credit' do
-    describe 'on charged' do
-      before :each do
-        @authorized = @gateway.charge(100, :method => @card_params)
-      end
-
-      describe 'full credit' do
-        it 'should be successful' do
-          credit = @authorized.refund(100, :method => @card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'), :reference => 'credit ref')
-          credit.errors.present?.should be false
-          credit.messages.present?.should be false
-          credit.id.should_not be_nil
-          credit.amount.should == 100
-          credit.reference.should eq 'credit ref'
-          credit.method[:fingerprint].should_not be_nil
-          credit.type.should eq 'REFUND'
-
-          charge = @gateway.find_transaction(@authorized.id)
-          charge.should_not be_nil
-          charge.amount_refunded.should == 100
-        end
-      end
-
-      describe 'partial credits' do
-        it 'should be successful' do
-          credit = @authorized.refund(50, :method => @card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'))
-          credit.errors.present?.should be false
-          credit.messages.present?.should be false
-          credit.id.should_not be_nil
-          credit.amount.should == 50
-          credit.type.should eq 'REFUND'
-
-          charge = @gateway.find_transaction(@authorized.id)
-          charge.should_not be_nil
-          charge.amount_refunded.should == 50
-
-          credit2 = @authorized.refund(35, :method => @card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'), :reference => 'credit 35')
-          credit2.errors.present?.should be false
-          credit2.messages.present?.should be false
-          credit2.id.should_not be_nil
-          credit2.amount.should == 35
-          credit2.reference.should eq 'credit 35'
-          credit2.type.should eq 'REFUND'
-
-          charge = @gateway.find_transaction(@authorized.id)
-          charge.should_not be_nil
-          charge.amount_refunded.should == 85
-        end
-      end
-
-      describe 'credit via payment token' do
-        it 'should be successful' do
-          token = @gateway.create_token(@card_params.merge(:number => '378282246310005', :card_type => 'AMERICAN_EXPRESS'))
-          credit = @authorized.refund(100, :method => token.id, :reference => 'Credit via Token')
-          credit.errors.present?.should be false
-          credit.messages.present?.should be false
-          credit.id.should_not be_nil
-          credit.amount.should == 100
-          credit.type.should eq 'REFUND'
-          credit.reference.should eq 'Credit via Token'
-          credit.method[:card_type].should == 'AMERICAN_EXPRESS'
-          credit.method[:number].should == '***********0005'
-        end
-      end
-
-      describe 'failures' do
-        it 'should return card number not_blank' do
-          credit = @authorized.refund(50, :method => @card_params.merge(:number => ''))
-          credit.errors.present?.should be true
-          credit.errors['method.number'].should == [ 'Card number cannot be blank' ]
-        end
-        it 'should return currency_mismatch' do
-          credit = @authorized.refund(Money.new(90, 'GBP'), :method => @card_params)
-          credit.errors.present?.should be true
-          credit.errors['base'].should == [ "Specified currency does not match the transaction's currency" ]
-        end
-        it 'should return refund_exceeds_transaction' do
-          credit = @authorized.refund(Money.new(101, 'USD'), :method => @card_params)
-          credit.errors.present?.should be true
-          credit.errors['base'].should == [ 'Amount of refund exceeds remaining transaction balance' ]
         end
       end
     end

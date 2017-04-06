@@ -3,6 +3,7 @@ require 'securerandom'
 
 describe "Token" do
   before(:all) do
+    skip("No secret_key specified in environment") unless ENV['secret_key']
     @gateway = ChargeIO::Gateway.new(DEFAULT_MERCHANT_TEST_MODE_OPTIONS.clone)
     @token_params = DEFAULT_CARD_PARAMS.clone
     @card_params = DEFAULT_CARD_PARAMS.clone
@@ -256,7 +257,7 @@ describe "Token" do
     it 'should authorize with empty country due to too-short invalid country code' do
       token = @gateway.create_token(@token_params.merge(:country => 'U'))
       token.errors.present?.should be false
-      token.should_not have_key :country
+      token.attributes.should_not have_key :country
 
       transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
@@ -265,7 +266,7 @@ describe "Token" do
     it 'should authorize with empty country due to too-long invalid country code' do
       token = @gateway.create_token(@token_params.merge(:country => 'USA'))
       token.errors.present?.should be false
-      token.should_not have_key :country
+      token.attributes.should_not have_key :country
 
       transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false
@@ -274,7 +275,7 @@ describe "Token" do
     it 'should authorize with empty country due to invalid country code' do
       token = @gateway.create_token(@token_params.merge(:country => 'ZZ'))
       token.errors.present?.should be false
-      token.should_not have_key :country
+      token.attributes.should_not have_key :country
 
       transaction = @gateway.authorize(100, :method => token.id)
       transaction.errors.present?.should be false

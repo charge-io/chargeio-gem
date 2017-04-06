@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe 'ACH' do
   before(:all) do
+    skip("No secret_key specified in environment") unless ENV['secret_key']
     @gateway = ChargeIO::Gateway.new(DEFAULT_MERCHANT_TEST_MODE_OPTIONS.clone)
   end
 
