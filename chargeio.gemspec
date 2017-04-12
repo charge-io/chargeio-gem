@@ -21,12 +21,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "bundler", ">= 1.0.0"
   gem.add_development_dependency "rspec", ">= 3.5.0"
   gem.add_development_dependency "money"
-
-  if RUBY_VERSION =~ /^1\.9/
-    gem.add_development_dependency 'ruby-debug19'
-  else
-    gem.add_development_dependency 'ruby-debug'
-  end
+  gem.add_development_dependency "pry-byebug"
+  gem.add_development_dependency "net-http-spy"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
