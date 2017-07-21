@@ -1,12 +1,13 @@
 module ChargeIO::Connection
   DEFAULT_TIMEOUT = 300
+  USER_AGENT = "chargeio-gem/#{ChargeIO::VERSION}"
 
   private
 
   def get(uri, id=nil, params={}, headers={})
     request = HTTParty::Request.new(Net::HTTP::Get,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
-                                    :headers => headers.merge({'content-type' => 'application/json'}),
+                                    :headers => headers.merge({'content-type' => 'application/json', 'User-Agent' => USER_AGENT}),
                                     :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
                                     :default_params => params,
@@ -17,7 +18,7 @@ module ChargeIO::Connection
   def post(uri, params=nil, headers={})
     request = HTTParty::Request.new(Net::HTTP::Post,
                                     "#{self.gateway.url}#{uri}",
-                                    :headers => headers.merge({'content-type' => 'application/json'}),
+                                    :headers => headers.merge({'content-type' => 'application/json', 'User-Agent' => USER_AGENT}),
                                     :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
                                     :body => params,
@@ -29,7 +30,7 @@ module ChargeIO::Connection
     params_urlenc = URI.encode_www_form(params)
     request = HTTParty::Request.new(Net::HTTP::Post,
                                     "#{self.gateway.url}#{uri}",
-                                    :headers => headers.merge({'content-type' => 'application/x-www-form-urlencoded'}),
+                                    :headers => headers.merge({'content-type' => 'application/x-www-form-urlencoded', 'User-Agent' => USER_AGENT}),
                                     :timeout => DEFAULT_TIMEOUT,
                                     :format => :plain,
                                     :body => params_urlenc,
@@ -40,7 +41,7 @@ module ChargeIO::Connection
   def put(uri, id, params, headers={})
     request = HTTParty::Request.new(Net::HTTP::Put,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
-                                    :headers => headers.merge({'content-type' => 'application/json'}),
+                                    :headers => headers.merge({'content-type' => 'application/json', 'User-Agent' => USER_AGENT}),
                                     :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
                                     :body => params,
@@ -51,7 +52,7 @@ module ChargeIO::Connection
   def patch(uri, id, params, headers={})
     request = HTTParty::Request.new(Net::HTTP::Patch,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
-                                    :headers => headers.merge({'content-type' => 'application/json'}),
+                                    :headers => headers.merge({'content-type' => 'application/json', 'User-Agent' => USER_AGENT}),
                                     :timeout => DEFAULT_TIMEOUT,
                                     :format => :json,
                                     :body => params,
@@ -62,7 +63,7 @@ module ChargeIO::Connection
   def delete(uri, id, headers={})
     request = HTTParty::Request.new(Net::HTTP::Delete,
                                     id.blank? ? "#{self.gateway.url}#{uri}" : "#{self.gateway.url}#{uri}/#{id}",
-                                    :headers => headers,
+                                    :headers => headers.merge({'User-Agent' => USER_AGENT}),
                                     :timeout => DEFAULT_TIMEOUT,
                                     #:format => :json,
                                     #:body => '',
